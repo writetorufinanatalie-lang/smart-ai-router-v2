@@ -48,10 +48,10 @@
             <span>Analytics</span>
             <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
-          <button class="nav-item" type="button" disabled aria-label="Test Lab, available in a later stage">
+          <button class="nav-item" id="navTestLab" type="button" data-view-button="test-lab">
             <span class="nav-icon" aria-hidden="true">⌗</span>
             <span>Test Lab</span>
-            <span class="nav-soon">NEXT</span>
+            <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
           <button class="nav-item" type="button" disabled aria-label="Privacy and System, available in a later stage">
             <span class="nav-icon" aria-hidden="true">◈</span>
@@ -296,6 +296,27 @@
               </table>
             </div>
             <p class="history-footnote">Evaluation runs are excluded from this table and from the normal-request charts.</p>
+          </section>
+        </section>
+
+        <section id="testLabView" data-view="test-lab" hidden aria-labelledby="testLabTitle">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> LOCAL CLASSIFIER EVALUATION</div>
+              <h1 id="testLabTitle">Test Lab</h1>
+              <p class="page-description">Three fixed test snapshots are shown separately. New background runs are listed separately below.</p>
+            </div>
+            <button class="refresh-button" id="refreshTestLab" type="button">Refresh reports</button>
+          </div>
+          <div class="test-lab-notice" role="note"><strong>Small hand-written sets:</strong> results are snapshots, not a measure of general performance. Each run uses the local model and may take a few minutes on this CPU-only laptop. Only one evaluation run can be active at a time.</div>
+          <p class="test-lab-status" id="testLabStatus" role="status" aria-live="polite">Loading saved evaluation reports…</p>
+          <section class="test-suite-section" aria-labelledby="savedSetsTitle">
+            <div class="section-heading"><div><div class="eyebrow">SAVED BASELINES</div><h2 id="savedSetsTitle">Three saved reports</h2></div></div>
+            <div class="test-suite-grid" id="savedSuites"><p class="empty-state">Loading saved reports…</p></div>
+          </section>
+          <section class="test-suite-section timestamped-section" aria-labelledby="timestampedTitle">
+            <div class="section-heading"><div><div class="eyebrow">NEW RUNS</div><h2 id="timestampedTitle">Timestamped runs</h2></div></div>
+            <div class="timestamped-runs" id="timestampedRuns"><p class="empty-state">No timestamped runs yet.</p></div>
           </section>
         </section>
       </main>

@@ -1,4 +1,4 @@
-import { loadOverview, routeRequest } from "./api.js";
+import { getEvaluationRun, loadEvaluationReports, loadOverview, routeRequest, startEvaluationRun } from "./api.js";
 
 const byId = (id) => document.getElementById(id);
 const refreshButton = byId("refreshStatus");
@@ -7,6 +7,9 @@ let activeController = null;
 let playgroundBusy = false;
 let sessionItems = 0;
 let latestRouteResult = null;
+let activeEvaluationRunId = null;
+let activeEvaluationSuiteId = null;
+let evaluationRunStarting = false;
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function setText(id, value) {
@@ -465,6 +468,7 @@ function switchView(name) {
     playground: byId("playgroundView"),
     "live-routing": byId("liveRoutingView"),
     analytics: byId("analyticsView"),
+    "test-lab": byId("testLabView"),
   };
   const selectedView = views[name] ? name : "overview";
   for (const [viewName, view] of Object.entries(views)) view.hidden = viewName !== selectedView;
@@ -476,11 +480,372 @@ function switchView(name) {
     const indicator = button.querySelector(".nav-indicator");
     if (indicator) indicator.hidden = !selected;
   }
-  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING", analytics: "ANALYTICS" };
-  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing", analytics: "Analytics" };
+  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING", analytics: "ANALYTICS", "test-lab": "TEST LAB" };
+  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing", analytics: "Analytics", "test-lab": "Test Lab" };
   document.querySelector(".breadcrumbs strong").textContent = labels[selectedView];
   document.title = `Smart AI Router · ${titles[selectedView]}`;
 }
+
+const testLabStatus = byId("testLabStatus");
+const savedSuitesHost = byId("savedSuites");
+const timestampedRunsHost = byId("timestampedRuns");
+const refreshTestLabButton = byId("refreshTestLab");
+
+function percentValue(value) {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "Not available";
+}
+
+function appendAccuracyCard(parent, title, value, correct, total, variant) {
+  const card = document.createElement("div");
+  card.className = `accuracy-card ${variant}`;
+  const label = document.createElement("span");
+  label.textContent = title;
+  const score = document.createElement("strong");
+  score.textContent = percentValue(value);
+  const detail = document.createElement("small");
+  detail.textContent = typeof correct === "number" && typeof total === "number" ? `${correct} / ${total} correct` : "No completed cases";
+  card.append(label, score, detail);
+  parent.append(card);
+}
+
+function renderReportSummary(summary) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "report-summary";
+  const accuracy = document.createElement("div");
+  accuracy.className = "accuracy-pair";
+  appendAccuracyCard(accuracy, "Classifier accuracy", summary?.classification_accuracy, summary?.classification_correct, summary?.cases_completed, "accuracy-classifier");
+  appendAccuracyCard(accuracy, "Final-route accuracy", summary?.route_accuracy, summary?.route_correct, summary?.cases_completed, "accuracy-route");
+  wrapper.append(accuracy);
+
+  const categorySection = document.createElement("section");
+  categorySection.className = "report-subsection";
+  addText(categorySection, "h4", "", "Per-category precision and recall");
+  const categoryData = summary?.per_category_precision_recall ?? {};
+  const categoryRows = Object.entries(categoryData);
+  if (categoryRows.length === 0) {
+    addText(categorySection, "p", "report-empty", "No category metrics available yet.");
+  } else {
+    const table = document.createElement("table");
+    table.className = "report-metric-table";
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    for (const title of ["Category", "Precision", "Recall", "Cases"]) addText(headRow, "th", "", title);
+    head.append(headRow);
+    const body = document.createElement("tbody");
+    for (const [category, values] of categoryRows) {
+      const row = document.createElement("tr");
+      addText(row, "td", "", category);
+      addText(row, "td", "", percentValue(values.precision));
+      addText(row, "td", "", percentValue(values.recall));
+      addText(row, "td", "", values.support ?? "Not available");
+      body.append(row);
+    }
+    table.append(head, body);
+    categorySection.append(table);
+  }
+  wrapper.append(categorySection);
+
+  const matrixSection = document.createElement("section");
+  matrixSection.className = "report-subsection";
+  addText(matrixSection, "h4", "", "Confusion matrix · expected rows, predicted columns");
+  const matrixData = summary?.confusion_matrix;
+  const labels = matrixData?.labels ?? [];
+  if (!labels.length || !matrixData?.rows) {
+    addText(matrixSection, "p", "report-empty", "No confusion matrix available yet.");
+  } else {
+    const matrix = document.createElement("div");
+    matrix.className = "matrix-wrap";
+    const table = document.createElement("table");
+    table.className = "confusion-table";
+    const head = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    addText(headerRow, "th", "matrix-corner", "Expected ↓ / Predicted →");
+    for (const label of labels) addText(headerRow, "th", "", label);
+    head.append(headerRow);
+    const body = document.createElement("tbody");
+    for (const expected of Object.keys(matrixData.rows)) {
+      const row = document.createElement("tr");
+      addText(row, "th", "", expected);
+      for (const predicted of labels) addText(row, "td", "", matrixData.rows[expected]?.[predicted] ?? "—");
+      body.append(row);
+    }
+    table.append(head, body);
+    matrix.append(table);
+    matrixSection.append(matrix);
+  }
+  wrapper.append(matrixSection);
+  return wrapper;
+}
+
+function renderCaseResults(container, results, filterId) {
+  const section = document.createElement("section");
+  section.className = "report-subsection case-results-section";
+  const heading = document.createElement("div");
+  heading.className = "case-results-heading";
+  addText(heading, "h4", "", `Per-case results (${results.length})`);
+  const select = document.createElement("select");
+  select.className = "category-filter";
+  select.id = filterId;
+  select.setAttribute("aria-label", "Filter cases by expected category");
+  const categories = [...new Set(results.map((item) => item.expected_category).filter(Boolean))].sort();
+  const options = [["ALL", "All categories"], ...categories.map((category) => [category, category])];
+  for (const [value, label] of options) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    select.append(option);
+  }
+  heading.append(select);
+  section.append(heading);
+  if (results.length === 0) {
+    addText(section, "p", "report-empty", "No cases have completed yet.");
+    container.append(section);
+    return;
+  }
+
+  const scroll = document.createElement("div");
+  scroll.className = "case-table-wrap";
+  const table = document.createElement("table");
+  table.className = "case-table";
+  const thead = document.createElement("thead");
+  const headingRow = document.createElement("tr");
+  for (const value of ["Case", "Expected category", "Predicted category", "Expected route", "Actual route", "Result", "Classification", "Answer", "Cloud"]) addText(headingRow, "th", "", value);
+  thead.append(headingRow);
+  const tbody = document.createElement("tbody");
+  const rows = [];
+  for (const item of results) {
+    const row = document.createElement("tr");
+    row.dataset.expectedCategory = item.expected_category ?? "UNKNOWN";
+    const pass = item.classification_correct === true && item.route_correct === true;
+    const values = [
+      item.case_id ?? "Unavailable",
+      item.expected_category ?? "Unavailable",
+      item.predicted_category ?? "ERROR",
+      item.expected_final_route ?? "Unavailable",
+      item.actual_final_route ?? "Unavailable",
+      pass ? "PASS" : "FAIL",
+      formatLatency(item.classification_latency_ms),
+      formatLatency(item.answer_latency_ms),
+      formatLatency(item.cloud_latency_ms),
+    ];
+    values.forEach((value, index) => {
+      const cell = document.createElement("td");
+      cell.textContent = String(value);
+      if (index === 5) cell.className = pass ? "case-pass" : "case-fail";
+      row.append(cell);
+    });
+    tbody.append(row);
+    rows.push(row);
+  }
+  table.append(thead, tbody);
+  scroll.append(table);
+  section.append(scroll);
+  select.addEventListener("change", () => {
+    const selected = select.value;
+    for (const row of rows) row.hidden = selected !== "ALL" && row.dataset.expectedCategory !== selected;
+  });
+  container.append(section);
+}
+
+function buildSuitePanel({ suiteId, label, report, available = true, timestamped = false, file = null }) {
+  const panel = document.createElement("article");
+  panel.className = timestamped ? "panel test-report-card timestamped-report-card" : "panel test-report-card";
+  const header = document.createElement("div");
+  header.className = "test-report-header";
+  const titleGroup = document.createElement("div");
+  addText(titleGroup, "div", "eyebrow", timestamped ? "TIMESTAMPED RUN" : "SAVED REPORT");
+  addText(titleGroup, "h3", "", label);
+  if (file) addText(titleGroup, "p", "report-file", file);
+  header.append(titleGroup);
+  if (!timestamped && suiteId) {
+    const runButton = document.createElement("button");
+    runButton.type = "button";
+    runButton.className = "send-button run-suite-button";
+    runButton.dataset.suiteId = suiteId;
+    runButton.textContent = "Run tests";
+    runButton.disabled = Boolean(activeEvaluationSuiteId || evaluationRunStarting);
+    runButton.addEventListener("click", () => startSuiteRun(suiteId));
+    header.append(runButton);
+  }
+  panel.append(header);
+
+  const progress = document.createElement("div");
+  progress.className = "run-progress-host";
+  if (!timestamped && suiteId) progress.id = `run-progress-${suiteId}`;
+  panel.append(progress);
+
+  if (!available || !report) {
+    addText(panel, "p", "report-empty report-empty-panel", "No saved report available for this suite yet.");
+    return panel;
+  }
+  const summary = report.summary ?? {};
+  const status = report.run_status ?? "unknown";
+  const reportInfo = document.createElement("div");
+  reportInfo.className = "report-info-line";
+  addText(reportInfo, "span", "", `Status: ${status.replaceAll("_", " ")}`);
+  addText(reportInfo, "span", "", `${summary.cases_completed ?? report.results?.length ?? 0} / ${summary.cases_in_set ?? report.results?.length ?? "?"} cases`);
+  panel.append(reportInfo, renderReportSummary(summary));
+  const cases = Array.isArray(report.results) ? report.results : [];
+  renderCaseResults(panel, cases, `filter-${timestamped ? file ?? suiteId : suiteId}`.replace(/[^a-zA-Z0-9_-]/g, "-"));
+  return panel;
+}
+
+function renderTestLabReports(payload) {
+  const fixed = Array.isArray(payload.sets) ? payload.sets : [];
+  savedSuitesHost.replaceChildren();
+  if (fixed.length === 0) addText(savedSuitesHost, "p", "empty-state", "No saved reports available.");
+  for (const item of fixed) {
+    savedSuitesHost.append(buildSuitePanel({
+      suiteId: item.suite_id,
+      label: item.label ?? item.suite_id ?? "Evaluation suite",
+      report: item.report,
+      available: item.available === true,
+    }));
+  }
+
+  timestampedRunsHost.replaceChildren();
+  const runs = Array.isArray(payload.timestamped_runs) ? payload.timestamped_runs : [];
+  if (runs.length === 0) addText(timestampedRunsHost, "p", "empty-state", "No timestamped runs yet.");
+  for (const item of runs) {
+    const runLabel = `${item.label ?? item.suite_id ?? "Evaluation run"} · ${item.report?.finished_at ? formatTimestamp(item.report.finished_at) : item.file ?? "In progress"}`;
+    timestampedRunsHost.append(buildSuitePanel({
+      suiteId: null,
+      label: runLabel,
+      report: item.report,
+      available: Boolean(item.report),
+      timestamped: true,
+      file: item.file,
+    }));
+  }
+  setTestLabStatus(payload.note || "Saved reports loaded. Sets and runs are shown separately.");
+  setRunButtonsDisabled(Boolean(activeEvaluationSuiteId || evaluationRunStarting));
+}
+
+function setTestLabStatus(message, isError = false) {
+  testLabStatus.textContent = message;
+  testLabStatus.dataset.state = isError ? "error" : "normal";
+}
+
+function setRunButtonsDisabled(disabled) {
+  for (const button of document.querySelectorAll(".run-suite-button")) button.disabled = disabled;
+}
+
+function renderRunProgress(suiteId, job, message = null, error = false) {
+  const host = byId(`run-progress-${suiteId}`);
+  if (!host) return;
+  host.replaceChildren();
+  if (message) {
+    addText(host, "p", error ? "run-error" : "run-message", message);
+    return;
+  }
+  const total = Number(job.total_cases) || 0;
+  const completed = Number(job.completed_cases) || 0;
+  const percentage = total > 0 ? Math.min(100, Math.round(completed * 100 / total)) : 0;
+  const progress = document.createElement("div");
+  progress.className = "run-progress";
+  const labelRow = document.createElement("div");
+  labelRow.className = "run-progress-label";
+  addText(labelRow, "span", "", job.status === "queued" ? "Queued" : `Running · ${completed} of ${total} cases`);
+  addText(labelRow, "strong", "", `${percentage}%`);
+  const bar = document.createElement("progress");
+  bar.max = 100;
+  bar.value = percentage;
+  bar.setAttribute("aria-label", `Evaluation progress: ${completed} of ${total} cases`);
+  progress.append(labelRow, bar);
+  host.append(progress);
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function startSuiteRun(suiteId) {
+  if (activeEvaluationSuiteId || evaluationRunStarting) return;
+  evaluationRunStarting = true;
+  activeEvaluationSuiteId = suiteId;
+  setRunButtonsDisabled(true);
+  setTestLabStatus("Starting the local evaluation. It may take a few minutes on this CPU-only laptop.");
+  renderRunProgress(suiteId, { status: "queued", completed_cases: 0, total_cases: 0 });
+  try {
+    const job = await startEvaluationRun(suiteId);
+    activeEvaluationRunId = job.run_id;
+    evaluationRunStarting = false;
+    renderRunProgress(suiteId, job);
+    setTestLabStatus(`Evaluation started: ${job.suite_label ?? suiteId}. It may take a few minutes.`);
+    await pollEvaluationRun(suiteId, job.run_id);
+  } catch (error) {
+    evaluationRunStarting = false;
+    activeEvaluationRunId = null;
+    activeEvaluationSuiteId = null;
+    const message = error.status === 409
+      ? "Another evaluation is already active on the backend. Wait for it to finish, then refresh Test Lab."
+      : error.message || "Could not start the evaluation run.";
+    renderRunProgress(suiteId, null, message, true);
+    setTestLabStatus(message, true);
+    setRunButtonsDisabled(false);
+  }
+}
+
+async function pollEvaluationRun(suiteId, runId) {
+  try {
+    while (activeEvaluationRunId === runId) {
+      await delay(1500);
+      const job = await getEvaluationRun(runId);
+      renderRunProgress(suiteId, job);
+      if (job.status === "queued" || job.status === "running") continue;
+      if (job.status === "failed") {
+        const message = job.error || "Evaluation run failed. Check the backend log for details.";
+        renderRunProgress(suiteId, null, message, true);
+        setTestLabStatus(message, true);
+      } else {
+        renderRunProgress(suiteId, null, `Run finished: ${job.result_file ?? "timestamped report saved"}.`);
+        setTestLabStatus(`Evaluation finished with status: ${String(job.status).replaceAll("_", " ")}.`);
+      }
+      activeEvaluationRunId = null;
+      activeEvaluationSuiteId = null;
+      setRunButtonsDisabled(false);
+      await refreshTestLabReports(false);
+      if (job.status === "failed") {
+        const message = job.error || "Evaluation run failed. Check the backend log for details.";
+        renderRunProgress(suiteId, null, message, true);
+        setTestLabStatus(message, true);
+      } else {
+        setTestLabStatus(`Evaluation finished with status: ${String(job.status).replaceAll("_", " ")}.`);
+      }
+      return;
+    }
+  } catch (error) {
+    activeEvaluationRunId = null;
+    activeEvaluationSuiteId = null;
+    setRunButtonsDisabled(false);
+    const message = "Could not read evaluation progress. The backend may still be working; refresh Test Lab to check saved runs.";
+    renderRunProgress(suiteId, null, message, true);
+    setTestLabStatus(message, true);
+    await refreshTestLabReports(false);
+    renderRunProgress(suiteId, null, message, true);
+    setTestLabStatus(message, true);
+  }
+}
+
+async function refreshTestLabReports(announce = true) {
+  refreshTestLabButton.disabled = true;
+  try {
+    const payload = await loadEvaluationReports();
+    renderTestLabReports(payload);
+    if (announce) setTestLabStatus("Saved reports and timestamped runs refreshed.");
+  } catch (error) {
+    savedSuitesHost.replaceChildren();
+    timestampedRunsHost.replaceChildren();
+    addText(savedSuitesHost, "p", "report-error", "Could not load saved reports from the backend.");
+    addText(timestampedRunsHost, "p", "empty-state", "Timestamped run data is unavailable.");
+    setTestLabStatus(error.message || "Could not load Test Lab data.", true);
+  } finally {
+    refreshTestLabButton.disabled = false;
+    setRunButtonsDisabled(Boolean(activeEvaluationSuiteId || evaluationRunStarting));
+  }
+}
+
+refreshTestLabButton.addEventListener("click", () => refreshTestLabReports());
 
 for (const button of document.querySelectorAll("[data-view-button]")) {
   button.addEventListener("click", () => switchView(button.dataset.viewButton));
@@ -714,3 +1079,4 @@ byId("clearSession").addEventListener("click", () => {
 updateComposer();
 if (latestRouteResult) updateLiveRouting(latestRouteResult.payload, latestRouteResult.requestText);
 refreshOverview();
+refreshTestLabReports(false);
