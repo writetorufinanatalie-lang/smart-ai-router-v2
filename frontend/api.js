@@ -69,10 +69,12 @@ export function routeRequest(requestText, options) {
 }
 
 export async function loadOverview(signal) {
-  const [health, stats, devices] = await Promise.allSettled([
+  const [health, stats, devices, history, activity] = await Promise.allSettled([
     getJson("/health", { signal }),
     getJson("/stats", { signal }),
     getJson("/devices", { signal }),
+    getJson("/history?limit=20", { signal }),
+    getJson("/activity?days=30", { signal }),
   ]);
-  return { health, stats, devices };
+  return { health, stats, devices, history, activity };
 }
