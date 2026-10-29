@@ -1,9 +1,11 @@
-import { loadOverview } from "./api.js";
+import { loadOverview, routeRequest } from "./api.js";
 
 const byId = (id) => document.getElementById(id);
 const refreshButton = byId("refreshStatus");
 const toast = byId("toast");
 let activeController = null;
+let playgroundBusy = false;
+let sessionItems = 0;
 
 function setText(id, value) {
   byId(id).textContent = value == null ? "—" : String(value);
@@ -224,4 +226,167 @@ async function refreshOverview() {
 }
 
 refreshButton.addEventListener("click", refreshOverview);
+
+function switchView(name) {
+  const overview = name === "overview";
+  byId("overviewView").hidden = !overview;
+  byId("playgroundView").hidden = overview;
+  for (const button of document.querySelectorAll("[data-view-button]")) {
+    const selected = button.dataset.viewButton === name;
+    button.classList.toggle("is-active", selected);
+    if (selected) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+    const indicator = button.querySelector(".nav-indicator");
+    if (indicator) indicator.hidden = !selected;
+  }
+  document.querySelector(".breadcrumbs strong").textContent = overview ? "OVERVIEW" : "AI PLAYGROUND";
+  document.title = `Smart AI Router · ${overview ? "Overview" : "AI Playground"}`;
+}
+
+for (const button of document.querySelectorAll("[data-view-button]")) {
+  button.addEventListener("click", () => switchView(button.dataset.viewButton));
+}
+
+const requestForm = byId("requestForm");
+const requestInput = byId("requestInput");
+const sendButton = byId("sendRequest");
+const sessionLog = byId("sessionLog");
+const playgroundStatus = byId("playgroundStatus");
+
+function updateComposer() {
+  byId("characterCount").textContent = String(requestInput.value.length);
+  sendButton.disabled = playgroundBusy || requestInput.value.trim().length === 0;
+}
+
+requestInput.addEventListener("input", updateComposer);
+for (const example of document.querySelectorAll("[data-example]")) {
+  example.addEventListener("click", () => {
+    requestInput.value = example.dataset.example;
+    updateComposer();
+    requestInput.focus();
+  });
+}
+
+function addText(parent, tag, className, value) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = value;
+  parent.append(node);
+  return node;
+}
+
+function addMetaGrid(card, payload) {
+  const grid = document.createElement("dl");
+  grid.className = "result-meta";
+  const values = [
+    ["Classifier label", payload.classifier_label ?? "Unavailable"],
+    ["Final route", payload.final_route ?? "ERROR"],
+    ["Parser override", payload.rule_parser_overrode_classifier ? "Yes" : "No"],
+    ["Classification", formatLatency(payload.classification_latency_ms)],
+    ["Answer generation", formatLatency(payload.answer_generation_latency_ms)],
+    ["Cloud", formatLatency(payload.cloud_latency_ms)],
+    ["Processing location", payload.classification_location ?? "Unavailable"],
+    ["Cloud contacted", payload.request_sent_to_cloud === true ? "Yes" : "No"],
+  ];
+  for (const [label, value] of values) {
+    const item = document.createElement("div");
+    item.className = "result-meta-item";
+    addText(item, "dt", "", label);
+    addText(item, "dd", "", value);
+    grid.append(item);
+  }
+  card.append(grid);
+}
+
+function formatLatency(value) {
+  return typeof value === "number" && Number.isFinite(value) ? `${value.toFixed(1)} ms` : "Not run";
+}
+
+function renderResult(requestText, payload, failureMessage = null) {
+  byId("sessionEmpty")?.remove();
+  const card = document.createElement("article");
+  card.className = "result-card";
+  card.setAttribute("aria-label", "Router response");
+  const header = document.createElement("div");
+  header.className = "result-card-header";
+  const executionStatus = payload.execution_status ?? "";
+  const isClarification = payload.final_route === "CLARIFICATION";
+  const noDevice = executionStatus === "device_control_not_performed";
+  const title = failureMessage ? "Request failed" : isClarification ? "Request needs clarification" : noDevice ? "No device was controlled" : payload.privacy_blocked ? "Blocked by Privacy Shield" : payload.execution_status === "local_generation_failed" ? "Local answer unavailable" : payload.message || "Router response";
+  addText(header, "strong", "result-title", title);
+  addText(header, "span", `route-badge route-${String(payload.final_route ?? "error").toLowerCase()}`, payload.final_route ?? "ERROR");
+  card.append(header);
+  addText(card, "p", "submitted-request", requestText);
+
+  if (failureMessage) addText(card, "p", "result-message result-error", failureMessage);
+  else if (payload.message) addText(card, "p", "result-message", payload.message);
+  if (isClarification) addText(card, "p", "clarification-hint", "Edit the request above and resend when you are ready.");
+  if (noDevice) addText(card, "p", "result-hint", "This request was not recognized as an allowed device command. No device action was run.");
+
+  if (payload.answer) {
+    addText(card, "div", "answer-label", "RESPONSE");
+    addText(card, "p", "answer-copy", payload.answer);
+  }
+  if (payload.command_result) {
+    addText(card, "div", "answer-label", "SIMULATED COMMAND RESULT");
+    addText(card, "pre", "command-output", JSON.stringify(payload.command_result, null, 2));
+  }
+  if (payload.privacy_blocked && Array.isArray(payload.sensitive_data_types) && payload.sensitive_data_types.length) {
+    addText(card, "p", "privacy-types", `Detected types: ${payload.sensitive_data_types.join(", ")}. Sensitive values are not displayed here.`);
+  }
+  const reason = payload.classification_reason;
+  if (reason) {
+    const source = payload.classification_reason_source === "rule" ? "Rule-based explanation" : payload.classification_reason_source === "model" ? "Model reason · unverified" : "Classification explanation";
+    addText(card, "div", "answer-label", source);
+    addText(card, "p", "reason-copy", reason);
+  }
+  addMetaGrid(card, payload);
+  sessionLog.append(card);
+  card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  sessionItems += 1;
+  playgroundStatus.textContent = isClarification ? "Request needs clarification. Edit it and resend." : title;
+}
+
+requestForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const requestText = requestInput.value.trim();
+  if (!requestText || playgroundBusy) return;
+  playgroundBusy = true;
+  updateComposer();
+  sendButton.querySelector("span:first-child").textContent = "Sending…";
+  playgroundStatus.textContent = "Waiting for the local router response.";
+  const pending = document.createElement("div");
+  pending.className = "pending-request";
+  pending.setAttribute("role", "status");
+  pending.textContent = "Waiting for the backend response…";
+  sessionLog.append(pending);
+  pending.scrollIntoView({ block: "nearest" });
+  try {
+    const payload = await routeRequest(requestText);
+    pending.remove();
+    renderResult(requestText, payload);
+  } catch (error) {
+    pending.remove();
+    renderResult(requestText, { final_route: "ERROR", execution_status: "request_failed" }, error.message || "The router request failed.");
+  } finally {
+    playgroundBusy = false;
+    sendButton.querySelector("span:first-child").textContent = "Send request";
+    updateComposer();
+  }
+});
+
+byId("clearSession").addEventListener("click", () => {
+  sessionLog.replaceChildren();
+  const empty = document.createElement("div");
+  empty.className = "session-empty";
+  empty.id = "sessionEmpty";
+  addText(empty, "span", "empty-mark", "⌘").setAttribute("aria-hidden", "true");
+  addText(empty, "strong", "", "Your session is ready");
+  addText(empty, "span", "", "Choose an example or write a request below.");
+  sessionLog.append(empty);
+  sessionItems = 0;
+  playgroundStatus.textContent = "Session cleared.";
+});
+
+updateComposer();
 refreshOverview();

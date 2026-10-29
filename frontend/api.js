@@ -36,6 +36,38 @@ export async function getJson(path, { signal } = {}) {
   return payload;
 }
 
+export async function postJson(path, body, { signal } = {}) {
+  let response;
+  try {
+    response = await fetch(path, {
+      method: "POST",
+      headers: { ...JSON_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+      credentials: "same-origin",
+      signal,
+    });
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
+    throw new ApiError("The backend could not be reached.");
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    throw new ApiError("The backend returned an unreadable response.", response.status);
+  }
+  if (!response.ok) {
+    throw new ApiError(`Backend request failed (${response.status}).`, response.status);
+  }
+  return payload;
+}
+
+export function routeRequest(requestText, options) {
+  return postJson("/route", { request_text: requestText }, options);
+}
+
 export async function loadOverview(signal) {
   const [health, stats, devices] = await Promise.allSettled([
     getJson("/health", { signal }),

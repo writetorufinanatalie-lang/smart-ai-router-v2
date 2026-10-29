@@ -28,15 +28,15 @@
 
         <div class="nav-label">WORKSPACE</div>
         <nav class="navigation" aria-label="Dashboard sections">
-          <a class="nav-item is-active" href="/" aria-current="page">
+          <button class="nav-item is-active" id="navOverview" type="button" data-view-button="overview" aria-current="page">
             <span class="nav-icon" aria-hidden="true">◫</span>
             <span>Overview</span>
             <span class="nav-indicator" aria-hidden="true"></span>
-          </a>
-          <button class="nav-item" type="button" disabled aria-label="AI Playground, available in a later stage">
+          </button>
+          <button class="nav-item" id="navPlayground" type="button" data-view-button="playground">
             <span class="nav-icon" aria-hidden="true">⌘</span>
             <span>AI Playground</span>
-            <span class="nav-soon">NEXT</span>
+            <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
           <button class="nav-item" type="button" disabled aria-label="Live Routing, available in a later stage">
             <span class="nav-icon" aria-hidden="true">⌁</span>
@@ -65,7 +65,7 @@
             <span class="local-note-dot" aria-hidden="true"></span>
             <div>
               <strong>LOCAL-FIRST</strong>
-              <span>Classification stays on this machine</span>
+              <span>Classifier uses local Ollama by design</span>
             </div>
           </div>
           <div class="sidebar-version">SMART AI ROUTER <span>·</span> PHASE 3</div>
@@ -89,6 +89,7 @@
           </div>
         </header>
 
+        <div id="overviewView" data-view="overview">
         <section class="page-heading" aria-labelledby="pageTitle">
           <div>
             <div class="eyebrow"><span class="eyebrow-line"></span> ROUTING CONTROL PLANE</div>
@@ -172,6 +173,43 @@
           <span>Local classification · Ollama · <span id="footerModel">qwen2.5:1.5b</span></span>
           <span>Cloud costs: not available</span>
         </footer>
+        </div>
+
+        <section id="playgroundView" data-view="playground" hidden aria-labelledby="playgroundTitle">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> LOCAL ROUTER SESSION</div>
+              <h1 id="playgroundTitle">AI Playground</h1>
+              <p class="page-description">Send a request through the live router and inspect its reported route and timings.</p>
+            </div>
+            <button class="refresh-button" id="clearSession" type="button">Clear session</button>
+          </div>
+          <section class="panel playground-panel" aria-label="Request playground">
+            <div class="panel-heading">
+              <div><div class="eyebrow">TRY AN EXAMPLE</div><h2>Start with a sample request</h2></div>
+              <span class="live-tag"><span aria-hidden="true"></span> LIVE ROUTER</span>
+            </div>
+            <div class="example-list" aria-label="Example requests">
+              <button class="example-chip" type="button" data-example="What is photosynthesis?">Simple · photosynthesis</button>
+              <button class="example-chip" type="button" data-example="Compare the trade-offs of solar and wind power for a small town.">Complex · compare energy</button>
+              <button class="example-chip" type="button" data-example="Turn on the desk light.">Command · desk light</button>
+              <button class="example-chip" type="button" data-example="Set the desk light brightness to 40 percent.">Command · brightness</button>
+            </div>
+            <div id="sessionLog" class="session-log" role="log" aria-live="polite" aria-relevant="additions text">
+              <div class="session-empty" id="sessionEmpty"><span class="empty-mark" aria-hidden="true">⌘</span><strong>Your session is ready</strong><span>Choose an example or write a request below.</span></div>
+            </div>
+            <form id="requestForm" class="request-composer">
+              <label for="requestInput">Your request</label>
+              <textarea id="requestInput" name="request_text" rows="3" maxlength="10000" placeholder="Ask a question or describe a request…" required></textarea>
+              <div class="composer-bottom">
+                <span><span id="characterCount">0</span>/10000 · Session stays in this page until cleared</span>
+                <button class="send-button" id="sendRequest" type="submit" disabled><span>Send request</span><span aria-hidden="true">↑</span></button>
+              </div>
+              <p class="composer-note">Requests may be processed locally or sent to a configured cloud provider based on the router decision. Sensitive data is blocked by the Privacy Shield.</p>
+              <p class="sr-only" id="playgroundStatus" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+        </section>
       </main>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
