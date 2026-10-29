@@ -124,6 +124,24 @@ def test_command_label_without_parser_match_returns_and_records_clarification_ro
     assert secret_text.encode() not in database_bytes
 
 
+def test_route_api_exposes_distinct_device_control_not_performed_status(tmp_path):
+    client, app = make_client(
+        tmp_path,
+        lambda _text: make_classification(RequestCategory.SIMPLE),
+    )
+
+    response = client.post("/route", json={"request_text": "Set brightness to 40"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["final_route"] == "LOCAL"
+    assert body["execution_status"] == "device_control_not_performed"
+    assert body["message"].startswith("No device was controlled")
+    assert app.state.metrics_store.stats()["execution_status_counts"] == {
+        "device_control_not_performed": 1
+    }
+
+
 def test_cloud_time_is_stored_separately_only_when_sender_was_called(tmp_path):
     def failing_sender(_text, _key):
         raise OSError("test provider failure")

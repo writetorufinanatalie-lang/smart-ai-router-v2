@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d17">
+    <meta name="description" content="Local-first Smart AI Router dashboard">
+    <title>Smart AI Router · Overview</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="Smart AI Router overview">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M7 8.5h7.2M17.8 8.5H25M7 23.5h7.2M17.8 23.5H25M9 8.5v15m14-15v15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="16" cy="8.5" r="3.2" fill="#62d6c5" stroke="#a5f3e7" stroke-width="1.4"/>
+              <circle cx="16" cy="23.5" r="3.2" fill="#9c8dff" stroke="#c6bdff" stroke-width="1.4"/>
+            </svg>
+          </span>
+          <span class="brand-copy">
+            <strong>SMART ROUTER</strong>
+            <span>LOCAL AI CONTROL PLANE</span>
+          </span>
+        </a>
+
+        <div class="nav-label">WORKSPACE</div>
+        <nav class="navigation" aria-label="Dashboard sections">
+          <a class="nav-item is-active" href="/" aria-current="page">
+            <span class="nav-icon" aria-hidden="true">◫</span>
+            <span>Overview</span>
+            <span class="nav-indicator" aria-hidden="true"></span>
+          </a>
+          <button class="nav-item" type="button" disabled aria-label="AI Playground, available in a later stage">
+            <span class="nav-icon" aria-hidden="true">⌘</span>
+            <span>AI Playground</span>
+            <span class="nav-soon">NEXT</span>
+          </button>
+          <button class="nav-item" type="button" disabled aria-label="Live Routing, available in a later stage">
+            <span class="nav-icon" aria-hidden="true">⌁</span>
+            <span>Live Routing</span>
+            <span class="nav-soon">NEXT</span>
+          </button>
+          <button class="nav-item" type="button" disabled aria-label="Analytics, available in a later stage">
+            <span class="nav-icon" aria-hidden="true">▥</span>
+            <span>Analytics</span>
+            <span class="nav-soon">NEXT</span>
+          </button>
+          <button class="nav-item" type="button" disabled aria-label="Test Lab, available in a later stage">
+            <span class="nav-icon" aria-hidden="true">⌗</span>
+            <span>Test Lab</span>
+            <span class="nav-soon">NEXT</span>
+          </button>
+          <button class="nav-item" type="button" disabled aria-label="Privacy and System, available in a later stage">
+            <span class="nav-icon" aria-hidden="true">◈</span>
+            <span>Privacy &amp; System</span>
+            <span class="nav-soon">NEXT</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="local-note">
+            <span class="local-note-dot" aria-hidden="true"></span>
+            <div>
+              <strong>LOCAL-FIRST</strong>
+              <span>Classification stays on this machine</span>
+            </div>
+          </div>
+          <div class="sidebar-version">SMART AI ROUTER <span>·</span> PHASE 3</div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="breadcrumbs"><span>WORKSPACE</span><span class="crumb-separator">/</span><strong>OVERVIEW</strong></div>
+          <div class="topbar-right">
+            <div class="connection-pill" id="connectionPill" data-state="checking" role="status" aria-live="polite">
+              <span class="connection-dot" aria-hidden="true"></span>
+              <span id="connectionText">Checking backend</span>
+            </div>
+            <button class="refresh-button" id="refreshStatus" type="button" aria-label="Refresh system status">
+              <svg viewBox="0 0 20 20" aria-hidden="true" fill="none">
+                <path d="M16.2 8.2A6.5 6.5 0 0 0 4.7 5.7L3.4 7M3.4 7V3.8M3.4 7h3.2m-2.8 4.8a6.5 6.5 0 0 0 11.5 2.5l1.3-1.3m0 0v3.2m0-3.2h-3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="page-heading" aria-labelledby="pageTitle">
+          <div>
+            <div class="eyebrow"><span class="eyebrow-line"></span> ROUTING CONTROL PLANE</div>
+            <h1 id="pageTitle">System overview</h1>
+            <p class="page-description">A live view of the local router, model runtime, and service configuration.</p>
+          </div>
+          <div class="snapshot-time">
+            <span class="snapshot-label">LAST CHECK</span>
+            <time id="lastChecked">Not checked yet</time>
+          </div>
+        </section>
+
+        <section class="status-grid" aria-label="System status">
+          <article class="status-card status-card-backend">
+            <div class="card-topline"><span class="card-icon icon-cyan" aria-hidden="true">⌂</span><span class="card-kicker">API SERVICE</span></div>
+            <div class="status-value-row"><h2 id="backendStatus">Checking</h2><span class="status-light" id="backendLight" data-state="checking" aria-hidden="true"></span></div>
+            <p id="backendDetail">Connecting to the local FastAPI service…</p>
+            <div class="card-footer"><span>METRICS STORE</span><strong id="metricsStatus">Checking</strong></div>
+          </article>
+
+          <article class="status-card status-card-model">
+            <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">✳</span><span class="card-kicker">LOCAL SLM</span></div>
+            <div class="status-value-row"><h2 id="modelStatus">Checking</h2><span class="status-light" id="modelLight" data-state="checking" aria-hidden="true"></span></div>
+            <p id="modelDetail">Checking Ollama and model availability…</p>
+            <div class="card-footer"><span>MODEL</span><strong id="modelName">—</strong></div>
+          </article>
+
+          <article class="status-card status-card-cloud">
+            <div class="card-topline"><span class="card-icon icon-amber" aria-hidden="true">↗</span><span class="card-kicker">CLOUD ROUTE</span></div>
+            <div class="status-value-row"><h2 id="cloudStatus">Checking</h2><span class="status-light" id="cloudLight" data-state="checking" aria-hidden="true"></span></div>
+            <p id="cloudDetail">Reading provider configuration…</p>
+            <div class="card-footer"><span>PROVIDER</span><strong id="providerStatus">Checking</strong></div>
+          </article>
+
+          <article class="status-card status-card-devices">
+            <div class="card-topline"><span class="card-icon icon-green" aria-hidden="true">⌁</span><span class="card-kicker">DEVICE REGISTRY</span></div>
+            <div class="status-value-row"><h2 id="deviceCount">Checking</h2><span class="status-light" id="deviceLight" data-state="checking" aria-hidden="true"></span></div>
+            <p id="deviceDetail">Loading simulated device state…</p>
+            <div class="card-footer"><span>STATE LIFETIME</span><strong>Until restart</strong></div>
+          </article>
+        </section>
+
+        <section class="overview-lower" aria-label="Request overview">
+          <article class="panel request-panel">
+            <div class="panel-heading">
+              <div>
+                <div class="eyebrow">REAL BACKEND COUNTS</div>
+                <h2>Request activity</h2>
+              </div>
+              <span class="live-tag"><span aria-hidden="true"></span> FROM SQLITE</span>
+            </div>
+            <div class="metric-row">
+              <div class="metric-block"><span class="metric-label">NORMAL USER REQUESTS</span><strong class="metric-number" id="normalRequests">—</strong><span class="metric-note">Excludes evaluation cases</span></div>
+              <div class="metric-divider" aria-hidden="true"></div>
+              <div class="metric-block"><span class="metric-label">EVALUATION CASES</span><strong class="metric-number metric-violet" id="evaluationCases">—</strong><span class="metric-note">Counted separately</span></div>
+            </div>
+            <div class="route-counts" aria-label="Normal request route counts">
+              <div class="route-count"><span class="route-dot route-dot-local" aria-hidden="true"></span><span>SIMPLE / LOCAL</span><strong id="localCount">—</strong></div>
+              <div class="route-count"><span class="route-dot route-dot-cloud" aria-hidden="true"></span><span>COMPLEX / CLOUD</span><strong id="cloudCount">—</strong></div>
+              <div class="route-count"><span class="route-dot route-dot-command" aria-hidden="true"></span><span>COMMAND</span><strong id="commandCount">—</strong></div>
+              <div class="route-count"><span class="route-dot route-dot-clarify" aria-hidden="true"></span><span>CLARIFICATION</span><strong id="clarificationCount">—</strong></div>
+            </div>
+          </article>
+
+          <article class="panel device-panel">
+            <div class="panel-heading">
+              <div>
+                <div class="eyebrow">SIMULATED ONLY</div>
+                <h2>Device state</h2>
+              </div>
+              <span class="device-reset-label">RESETS ON RESTART</span>
+            </div>
+            <div class="device-list" id="deviceList" aria-live="polite">
+              <div class="device-placeholder">Waiting for backend status…</div>
+            </div>
+            <p class="panel-footnote" id="deviceStatusNote">Simulated, in-memory, resets on server restart.</p>
+          </article>
+        </section>
+
+        <footer class="page-footer">
+          <span>Local classification · Ollama · <span id="footerModel">qwen2.5:1.5b</span></span>
+          <span>Cloud costs: not available</span>
+        </footer>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

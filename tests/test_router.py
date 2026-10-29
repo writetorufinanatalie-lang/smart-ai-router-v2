@@ -210,6 +210,24 @@ def test_simple_lights_on_request_is_executed_only_by_the_whitelist_parser():
     assert len(registry.calls) == 1
 
 
+def test_unrecognized_simple_device_request_has_distinct_not_performed_status():
+    generator = FakeAnswerGenerator("The brightness is now set to 40%.")
+    registry = ExecutionSpy()
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        local_answer_generator=generator,
+        command_registry=registry,
+    )
+
+    response = router.route("Set brightness to 40")
+
+    assert response.final_route is FinalRoute.LOCAL
+    assert response.execution_status == "device_control_not_performed"
+    assert response.message.startswith("No device was controlled")
+    assert generator.calls == []
+    assert registry.calls == []
+
+
 @pytest.mark.parametrize(
     "text",
     [
