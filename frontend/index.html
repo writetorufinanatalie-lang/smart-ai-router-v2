@@ -43,10 +43,10 @@
             <span>Live Routing</span>
             <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
-          <button class="nav-item" type="button" disabled aria-label="Analytics, available in a later stage">
+          <button class="nav-item" id="navAnalytics" type="button" data-view-button="analytics">
             <span class="nav-icon" aria-hidden="true">▥</span>
             <span>Analytics</span>
-            <span class="nav-soon">NEXT</span>
+            <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
           <button class="nav-item" type="button" disabled aria-label="Test Lab, available in a later stage">
             <span class="nav-icon" aria-hidden="true">⌗</span>
@@ -169,6 +169,17 @@
           </article>
         </section>
 
+        <section class="overview-insights" aria-label="Request category and outcome summaries">
+          <article class="panel insight-panel">
+            <div class="panel-heading"><div><div class="eyebrow">NORMAL USER REQUESTS</div><h2>Requests by category</h2></div></div>
+            <div id="overviewCategories" class="summary-list"><p class="empty-state">Loading real request data…</p></div>
+          </article>
+          <article class="panel insight-panel">
+            <div class="panel-heading"><div><div class="eyebrow">ROUTER OUTCOMES</div><h2>Command outcomes</h2></div></div>
+            <div id="overviewCommandOutcomes" class="summary-list"><p class="empty-state">Loading real request data…</p></div>
+          </article>
+        </section>
+
         <footer class="page-footer">
           <span>Local classification · Ollama · <span id="footerModel">qwen2.5:1.5b</span></span>
           <span>Cloud costs: not available</span>
@@ -241,6 +252,50 @@
               <div><strong id="outcomeTitle">No request yet</strong><p id="outcomeDetail">No route or outcome is highlighted until the backend returns a result.</p></div>
             </div>
             <div class="routing-footer"><span>Most recent result</span><strong id="routingTimestamp">No backend result received</strong></div>
+          </section>
+        </section>
+
+        <section id="analyticsView" data-view="analytics" hidden aria-labelledby="analyticsTitle">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> REAL SQLITE METRICS</div>
+              <h1 id="analyticsTitle">Analytics</h1>
+              <p class="page-description">Normal user requests and evaluation cases are reported separately. Charts show normal requests only.</p>
+            </div>
+          </div>
+          <section class="analytics-top-grid" aria-label="Request metrics">
+            <article class="panel analytics-summary">
+              <div class="panel-heading"><div><div class="eyebrow">NORMAL USER REQUESTS</div><h2>Requests by category</h2></div><span class="live-tag"><span aria-hidden="true"></span> /STATS</span></div>
+              <div id="analyticsCategories" class="summary-list"><p class="empty-state">Loading real request data…</p></div>
+            </article>
+            <article class="panel analytics-summary">
+              <div class="panel-heading"><div><div class="eyebrow">ROUTER OUTCOMES</div><h2>Command outcomes</h2></div><span class="live-tag"><span aria-hidden="true"></span> /STATS</span></div>
+              <div id="analyticsCommandOutcomes" class="summary-list"><p class="empty-state">Loading real request data…</p></div>
+            </article>
+          </section>
+          <section class="chart-grid" aria-label="Request charts">
+            <article class="panel chart-panel">
+              <div class="panel-heading"><div><div class="eyebrow">DAILY ACTIVITY</div><h2>Requests over time</h2></div><span class="chart-source">/ACTIVITY · NORMAL REQUESTS</span></div>
+              <div id="dailyActivityChart" class="chart-host"><p class="empty-state">Loading real request data…</p></div>
+            </article>
+            <article class="panel chart-panel">
+              <div class="panel-heading"><div><div class="eyebrow">FINAL ROUTES</div><h2>Route distribution</h2></div><span class="chart-source">/STATS · NORMAL REQUESTS</span></div>
+              <div id="routeDistributionChart" class="chart-host"><p class="empty-state">Loading real request data…</p></div>
+            </article>
+          </section>
+          <section class="panel latency-panel" aria-labelledby="latencyTitle">
+            <div class="panel-heading"><div><div class="eyebrow">NORMAL REQUEST STAGES</div><h2 id="latencyTitle">Stage latency</h2></div><span class="chart-source">MEAN AND MEDIAN</span></div>
+            <div class="latency-grid" id="latencySummary"><p class="empty-state">Loading real request data…</p></div>
+          </section>
+          <section class="panel history-panel" aria-labelledby="historyTitle">
+            <div class="panel-heading"><div><div class="eyebrow">METADATA ONLY · NO REQUEST TEXT</div><h2 id="historyTitle">Recent request history</h2></div><span class="live-tag"><span aria-hidden="true"></span> /HISTORY</span></div>
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead><tr><th scope="col">Time</th><th scope="col">Category</th><th scope="col">Route</th><th scope="col">Override</th><th scope="col">Classification</th><th scope="col">Answer</th><th scope="col">Cloud</th></tr></thead>
+                <tbody id="historyRows"><tr><td class="table-empty" colspan="7">Loading real request data…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="history-footnote">Evaluation runs are excluded from this table and from the normal-request charts.</p>
           </section>
         </section>
       </main>

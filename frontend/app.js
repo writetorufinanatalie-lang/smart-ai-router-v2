@@ -7,6 +7,7 @@ let activeController = null;
 let playgroundBusy = false;
 let sessionItems = 0;
 let latestRouteResult = null;
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 function setText(id, value) {
   byId(id).textContent = value == null ? "—" : String(value);
@@ -28,6 +29,17 @@ function showToast(message) {
 }
 
 function displayBackendUnavailable() {
+  displayHealthUnavailable();
+  setText("normalRequests", "—");
+  setText("evaluationCases", "—");
+  setText("localCount", "—");
+  setText("cloudCount", "—");
+  setText("commandCount", "—");
+  setText("clarificationCount", "—");
+  showUnavailableAnalytics("Backend data unavailable.");
+}
+
+function displayHealthUnavailable() {
   byId("connectionPill").dataset.state = "error";
   setText("connectionText", "Backend unavailable");
   setStatus("backendLight", "backendStatus", "Disconnected", "error");
@@ -43,17 +55,14 @@ function displayBackendUnavailable() {
   setText("deviceDetail", "Backend device state could not be read.");
   setText("deviceStatusNote", "Device state unavailable until the backend responds.");
   byId("deviceList").replaceChildren();
-  setText("normalRequests", "—");
-  setText("evaluationCases", "—");
-  setText("localCount", "—");
-  setText("cloudCount", "—");
-  setText("commandCount", "—");
-  setText("clarificationCount", "—");
 }
 
 function displayStatsUnavailable() {
   for (const id of ["normalRequests", "evaluationCases", "localCount", "cloudCount", "commandCount", "clarificationCount"]) {
     setText(id, "Unavailable");
+  }
+  for (const id of ["overviewCategories", "overviewCommandOutcomes", "analyticsCategories", "analyticsCommandOutcomes", "routeDistributionChart", "latencySummary"]) {
+    showEmptyState(id, "Request metrics unavailable.");
   }
 }
 
@@ -123,6 +132,216 @@ function applyStats(payload) {
   setText("cloudCount", routes.CLOUD ?? 0);
   setText("commandCount", (routes.COMMAND ?? 0) + (routes.COMMAND_UNSUPPORTED ?? 0));
   setText("clarificationCount", routes.CLARIFICATION ?? 0);
+  renderCategorySummary("overviewCategories", payload.classifier_label_counts ?? {}, payload.total_requests ?? 0);
+  renderCategorySummary("analyticsCategories", payload.classifier_label_counts ?? {}, payload.total_requests ?? 0);
+  renderCommandOutcomes("overviewCommandOutcomes", payload.execution_status_counts ?? {}, payload.total_requests ?? 0);
+  renderCommandOutcomes("analyticsCommandOutcomes", payload.execution_status_counts ?? {}, payload.total_requests ?? 0);
+  renderRouteDistribution(payload.route_counts ?? {});
+  renderLatencySummary(payload);
+}
+
+function showEmptyState(id, message) {
+  const host = byId(id);
+  if (!host) return;
+  const empty = document.createElement("p");
+  empty.className = "empty-state";
+  empty.textContent = message;
+  host.replaceChildren(empty);
+}
+
+function renderSummaryRows(hostId, entries, hasData) {
+  const host = byId(hostId);
+  host.replaceChildren();
+  if (!hasData) {
+    showEmptyState(hostId, "No data yet.");
+    return;
+  }
+  for (const [label, count] of entries) {
+    const row = document.createElement("div");
+    row.className = "summary-row";
+    const name = document.createElement("span");
+    name.textContent = label;
+    const value = document.createElement("strong");
+    value.textContent = String(count);
+    row.append(name, value);
+    host.append(row);
+  }
+}
+
+function renderCategorySummary(hostId, counts, totalRequests) {
+  const entries = ["SIMPLE", "COMPLEX", "COMMAND"].map((label) => [label, Number(counts[label] ?? 0)]);
+  renderSummaryRows(hostId, entries, Number(totalRequests) > 0);
+}
+
+function renderCommandOutcomes(hostId, counts, totalRequests) {
+  const labels = {
+    executed_locally: "Simulated command executed",
+    device_not_supported: "Device not supported",
+    command_not_supported: "Command not supported",
+    device_control_not_performed: "No device was controlled",
+    clarification_needed: "Clarification requested",
+  };
+  const entries = Object.entries(labels).map(([key, label]) => [label, Number(counts[key] ?? 0)]);
+  renderSummaryRows(hostId, entries, Number(totalRequests) > 0);
+}
+
+function svgElement(tag, attributes = {}, text = null) {
+  const element = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, String(value));
+  if (text !== null) element.textContent = String(text);
+  return element;
+}
+
+function renderRouteDistribution(routeCounts) {
+  const host = byId("routeDistributionChart");
+  const entries = Object.entries(routeCounts).filter(([, value]) => Number(value) > 0).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    showEmptyState("routeDistributionChart", "No data yet.");
+    return;
+  }
+  const colors = { LOCAL: "#62d6c5", CLOUD: "#a99aff", COMMAND: "#f3bd73", COMMAND_UNSUPPORTED: "#ef7b88", CLARIFICATION: "#9eacc0", ERROR: "#bd7883" };
+  const width = 660;
+  const rowHeight = 39;
+  const height = entries.length * rowHeight + 15;
+  const svg = svgElement("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Route distribution from normal user requests" });
+  svg.append(svgElement("title", {}, "Route distribution"));
+  const maxValue = Math.max(...entries.map(([, value]) => Number(value)));
+  entries.forEach(([route, rawCount], index) => {
+    const count = Number(rawCount);
+    const y = index * rowHeight + 5;
+    svg.append(svgElement("text", { x: 0, y: y + 12, class: "chart-label" }, route.replaceAll("_", " ")));
+    svg.append(svgElement("rect", { x: 174, y, width: 400, height: 18, rx: 5, class: "chart-track" }));
+    svg.append(svgElement("rect", { x: 174, y, width: Math.max(2, 400 * count / maxValue), height: 18, rx: 5, fill: colors[route] ?? "#8b9ab0", class: "chart-bar" }));
+    svg.append(svgElement("text", { x: 590, y: y + 13, class: "chart-value" }, count));
+  });
+  host.replaceChildren(svg);
+}
+
+function renderDailyActivity(payload) {
+  const days = payload.days ?? [];
+  const host = byId("dailyActivityChart");
+  if (!days.some((day) => Number(day.total_requests) > 0)) {
+    showEmptyState("dailyActivityChart", "No data yet.");
+    return;
+  }
+  const width = 660;
+  const height = 260;
+  const left = 42;
+  const right = 16;
+  const top = 16;
+  const bottom = 40;
+  const plotWidth = width - left - right;
+  const plotHeight = height - top - bottom;
+  const maxValue = Math.max(1, ...days.map((day) => Number(day.total_requests) || 0));
+  const scaleMax = Math.ceil(maxValue / 5) * 5 || 1;
+  const svg = svgElement("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Daily normal user request activity" });
+  svg.append(svgElement("title", {}, "Daily request activity"));
+  const tickCount = Math.min(4, scaleMax);
+  for (let tick = 0; tick <= tickCount; tick += 1) {
+    const value = Math.round(scaleMax * tick / tickCount);
+    const y = top + plotHeight - plotHeight * value / scaleMax;
+    svg.append(svgElement("line", { x1: left, y1: y, x2: width - right, y2: y, class: "chart-gridline" }));
+    svg.append(svgElement("text", { x: left - 10, y: y + 3, class: "chart-axis-label", "text-anchor": "end" }, value));
+  }
+  const pointFor = (day, index) => ({
+    x: left + (days.length <= 1 ? plotWidth / 2 : plotWidth * index / (days.length - 1)),
+    y: top + plotHeight - plotHeight * (Number(day.total_requests) || 0) / scaleMax,
+  });
+  const points = days.map(pointFor);
+  const path = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  svg.append(svgElement("path", { d: path, class: "chart-line" }));
+  points.forEach((point) => svg.append(svgElement("circle", { cx: point.x, cy: point.y, r: 2.8, class: "chart-point" })));
+  const dateIndices = [...new Set([0, Math.floor((days.length - 1) / 2), days.length - 1])];
+  for (const index of dateIndices) {
+    const point = points[index];
+    const shortDate = String(days[index].date ?? "").slice(5);
+    svg.append(svgElement("text", { x: point.x, y: height - 13, class: "chart-axis-label", "text-anchor": index === 0 ? "start" : index === days.length - 1 ? "end" : "middle" }, shortDate));
+  }
+  host.replaceChildren(svg);
+}
+
+function renderLatencySummary(stats) {
+  const stages = [
+    ["Classification", stats.average_classification_time_ms, stats.median_classification_time_ms],
+    ["Answer generation", stats.average_answer_time_ms, stats.median_answer_time_ms],
+    ["Cloud", stats.average_cloud_time_ms, stats.median_cloud_time_ms],
+  ];
+  const host = byId("latencySummary");
+  host.replaceChildren();
+  for (const [name, mean, median] of stages) {
+    const card = document.createElement("div");
+    card.className = "latency-stage";
+    const title = document.createElement("strong");
+    title.textContent = name;
+    const meanRow = document.createElement("div");
+    meanRow.className = "latency-value-row";
+    meanRow.append(document.createElement("span"), document.createElement("b"));
+    meanRow.firstChild.textContent = "Mean";
+    meanRow.lastChild.textContent = formatLatency(mean);
+    const medianRow = document.createElement("div");
+    medianRow.className = "latency-value-row";
+    medianRow.append(document.createElement("span"), document.createElement("b"));
+    medianRow.firstChild.textContent = "Median";
+    medianRow.lastChild.textContent = formatLatency(median);
+    card.append(title, meanRow, medianRow);
+    host.append(card);
+  }
+}
+
+function formatTimestamp(value) {
+  if (!value) return "Unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+}
+
+function renderHistory(payload) {
+  const body = byId("historyRows");
+  body.replaceChildren();
+  const rows = payload.items ?? [];
+  if (rows.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "table-empty";
+    cell.colSpan = 7;
+    cell.textContent = "No data yet.";
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  for (const record of rows) {
+    const row = document.createElement("tr");
+    const values = [
+      formatTimestamp(record.created_at),
+      record.classifier_label ?? "Unavailable",
+      record.final_route ?? "Unavailable",
+      record.rule_parser_overrode_classifier ? "Yes" : "No",
+      formatLatency(record.classification_time_ms),
+      formatLatency(record.answer_time_ms),
+      formatLatency(record.cloud_time_ms),
+    ];
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    body.append(row);
+  }
+}
+
+function showUnavailableAnalytics(message) {
+  for (const id of ["overviewCategories", "overviewCommandOutcomes", "analyticsCategories", "analyticsCommandOutcomes", "dailyActivityChart", "routeDistributionChart", "latencySummary"]) {
+    showEmptyState(id, message);
+  }
+  const body = byId("historyRows");
+  if (body) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "table-empty";
+    cell.colSpan = 7;
+    cell.textContent = message;
+    row.append(cell);
+    body.replaceChildren(row);
+  }
 }
 
 function createDeviceRow(name, state) {
@@ -200,17 +419,29 @@ async function refreshOverview() {
   try {
     const result = await loadOverview(controller.signal);
     if (controller.signal.aborted) return;
-    if (result.health.status === "fulfilled") {
-      applyHealth(result.health.value);
-      if (!applyUnavailable(result.stats, applyStats, "Request metrics are unavailable.")) {
-        displayStatsUnavailable();
-      }
-      if (!applyUnavailable(result.devices, applyDevices, "Simulated device state is unavailable.")) {
-        displayDevicesUnavailable();
-      }
-    } else {
-      displayBackendUnavailable();
-      showToast("The backend could not be reached. Start FastAPI, then refresh.");
+    if (result.health.status === "fulfilled") applyHealth(result.health.value);
+    else {
+      displayHealthUnavailable();
+      showToast("Backend health is unavailable; loading available dashboard data separately.");
+    }
+    if (!applyUnavailable(result.stats, applyStats, "Request metrics are unavailable.")) {
+      displayStatsUnavailable();
+    }
+    if (!applyUnavailable(result.devices, applyDevices, "Simulated device state is unavailable.")) {
+      displayDevicesUnavailable();
+    }
+    if (!applyUnavailable(result.history, renderHistory, "Request history is unavailable.")) {
+      const body = byId("historyRows");
+      const row = document.createElement("tr");
+      const cell = document.createElement("td");
+      cell.className = "table-empty";
+      cell.colSpan = 7;
+      cell.textContent = "Request history is unavailable.";
+      row.append(cell);
+      body.replaceChildren(row);
+    }
+    if (!applyUnavailable(result.activity, renderDailyActivity, "Daily activity is unavailable.")) {
+      showEmptyState("dailyActivityChart", "Daily activity is unavailable.");
     }
     setText("lastChecked", new Date().toLocaleTimeString());
   } catch (error) {
@@ -233,6 +464,7 @@ function switchView(name) {
     overview: byId("overviewView"),
     playground: byId("playgroundView"),
     "live-routing": byId("liveRoutingView"),
+    analytics: byId("analyticsView"),
   };
   const selectedView = views[name] ? name : "overview";
   for (const [viewName, view] of Object.entries(views)) view.hidden = viewName !== selectedView;
@@ -244,8 +476,8 @@ function switchView(name) {
     const indicator = button.querySelector(".nav-indicator");
     if (indicator) indicator.hidden = !selected;
   }
-  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING" };
-  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing" };
+  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING", analytics: "ANALYTICS" };
+  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing", analytics: "Analytics" };
   document.querySelector(".breadcrumbs strong").textContent = labels[selectedView];
   document.title = `Smart AI Router · ${titles[selectedView]}`;
 }
@@ -453,6 +685,7 @@ requestForm.addEventListener("submit", async (event) => {
     latestRouteResult = { payload, requestText };
     updateLiveRouting(payload, requestText);
     renderResult(requestText, payload);
+    void refreshOverview();
   } catch (error) {
     pending.remove();
     latestRouteResult = null;
