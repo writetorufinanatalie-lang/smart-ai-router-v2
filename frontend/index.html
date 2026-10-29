@@ -38,10 +38,10 @@
             <span>AI Playground</span>
             <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
-          <button class="nav-item" type="button" disabled aria-label="Live Routing, available in a later stage">
+          <button class="nav-item" id="navLiveRouting" type="button" data-view-button="live-routing">
             <span class="nav-icon" aria-hidden="true">⌁</span>
             <span>Live Routing</span>
-            <span class="nav-soon">NEXT</span>
+            <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
           <button class="nav-item" type="button" disabled aria-label="Analytics, available in a later stage">
             <span class="nav-icon" aria-hidden="true">▥</span>
@@ -208,6 +208,39 @@
               <p class="composer-note">Requests may be processed locally or sent to a configured cloud provider based on the router decision. Sensitive data is blocked by the Privacy Shield.</p>
               <p class="sr-only" id="playgroundStatus" role="status" aria-live="polite"></p>
             </form>
+          </section>
+        </section>
+
+        <section id="liveRoutingView" data-view="live-routing" hidden aria-labelledby="liveRoutingTitle">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> MOST RECENT BACKEND RESULT</div>
+              <h1 id="liveRoutingTitle">Live Routing</h1>
+              <p class="page-description">This diagram reflects the final route returned for the latest Playground request.</p>
+            </div>
+          </div>
+          <section class="panel routing-panel" aria-label="Most recent request route">
+            <div class="routing-panel-heading">
+              <div><div class="eyebrow">ROUTER PATH</div><h2 id="routingSummary">No request yet</h2></div>
+              <span class="live-tag"><span aria-hidden="true"></span> BACKEND RESULT</span>
+            </div>
+            <p class="routing-context" id="routingContext">Send a request in AI Playground to see the route selected by the backend.</p>
+            <div class="route-diagram" id="routeDiagram" data-state="empty" role="img" aria-label="No request yet. No route is highlighted.">
+              <div class="diagram-node diagram-input" data-diagram-node="input"><span class="diagram-node-icon" aria-hidden="true">↗</span><span class="diagram-node-label">Request</span><span class="diagram-node-detail" id="diagramRequest">No request yet</span></div>
+              <span class="diagram-connector connector-input" aria-hidden="true"></span>
+              <div class="diagram-node diagram-router" data-diagram-node="router"><span class="diagram-node-icon" aria-hidden="true">✳</span><span class="diagram-node-label">Local classifier</span><span class="diagram-node-detail">Backend routing decision</span></div>
+              <div class="diagram-branches" aria-label="Possible backend final routes">
+                <span class="diagram-connector connector-branch" aria-hidden="true"></span>
+                <div class="diagram-route-node route-node-local" data-route-node="LOCAL"><span class="route-node-dot" aria-hidden="true"></span><span>LOCAL</span><small>Local answer</small></div>
+                <div class="diagram-route-node route-node-cloud" data-route-node="CLOUD"><span class="route-node-dot" aria-hidden="true"></span><span>CLOUD</span><small>Cloud route</small></div>
+                <div class="diagram-route-node route-node-command" data-route-node="COMMAND"><span class="route-node-dot" aria-hidden="true"></span><span>COMMAND</span><small>Simulated device</small></div>
+              </div>
+            </div>
+            <div class="routing-outcome" id="routingOutcome" data-state="empty" role="status" aria-live="polite">
+              <span class="outcome-symbol" id="outcomeSymbol" aria-hidden="true">·</span>
+              <div><strong id="outcomeTitle">No request yet</strong><p id="outcomeDetail">No route or outcome is highlighted until the backend returns a result.</p></div>
+            </div>
+            <div class="routing-footer"><span>Most recent result</span><strong id="routingTimestamp">No backend result received</strong></div>
           </section>
         </section>
       </main>
