@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean, median
-from typing import Any
+from typing import Any, Callable
 from uuid import uuid4
 
 from backend.classifier import DEFAULT_MODEL, ClassificationError, RequestCategory
@@ -194,12 +194,15 @@ def run_evaluation(
     *,
     cases_path: str | Path = DEFAULT_CASES_PATH,
     output_path: str | Path = DEFAULT_OUTPUT_PATH,
+    suite_id: str | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
+    metrics_store: MetricsStore | None = None,
 ) -> dict[str, Any]:
     """Run each case through the real local router and save actual run metadata."""
 
     cases = load_cases(cases_path)
     router = SmartRouter()
-    metrics = MetricsStore(DEFAULT_METRICS_PATH)
+    metrics = metrics_store or MetricsStore(DEFAULT_METRICS_PATH)
     report_path = Path(output_path)
     run_id = uuid4().hex
     started_at = datetime.now(timezone.utc).isoformat()
@@ -209,6 +212,7 @@ def run_evaluation(
         return {
             "schema_version": 1,
             "run_id": run_id,
+            "suite_id": suite_id,
             "run_status": status,
             "data_source": "real_local_classifier_and_router_runs",
             "model": DEFAULT_MODEL,
@@ -242,6 +246,15 @@ def run_evaluation(
             )
         rows.append(row)
         _write_report(report_path, report("in_progress"))
+        if progress_callback is not None:
+            progress_callback(
+                {
+                    "completed_cases": len(rows),
+                    "current_case_id": case["case_id"],
+                    "latest_result": row,
+                    "summary": summarize_results(rows, len(cases)),
+                }
+            )
         print(
             f"[{index}/{len(cases)}] {case['case_id']}: "
             f"{row['predicted_category'] or 'ERROR'} -> {row['actual_final_route']}",

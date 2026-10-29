@@ -92,6 +92,11 @@ class SmartRouter:
         self._local_answer_generator = local_answer_generator or LocalAnswerGenerator()
         self._cloud_adapter = cloud_adapter or CloudAdapter()
 
+    def simulated_device_snapshot(self) -> dict[str, dict[str, int | bool]]:
+        """Return current simulated state; it is in-memory and resets on restart."""
+
+        return self._command_registry.snapshot()
+
     def route(self, request_text: str) -> RoutingResponse:
         classification = self._classifier(request_text)
         parsed = self._command_parser(request_text)
@@ -174,7 +179,7 @@ class SmartRouter:
                     classification_reason=classification.reason,
                     classification_reason_source=classification.reason_source,
                     classification_latency_ms=classification.latency_ms,
-                    execution_status="completed_locally",
+                    execution_status="device_control_not_performed",
                     message=_NO_DEVICE_CONTROL_MESSAGE,
                 )
             try:

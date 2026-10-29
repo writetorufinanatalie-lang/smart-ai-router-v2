@@ -69,27 +69,35 @@ def test_stats_aggregate_stage_timings_and_routes_from_stored_rows(tmp_path):
 
     stats = store.stats()
 
-    assert stats["total_requests"] == 3
+    assert stats["total_requests"] == 2
+    assert stats["normal_user_requests"] == 2
     assert stats["route_requests"] == 2
     assert stats["evaluation_cases"] == 1
-    assert stats["requests_handled_locally"] == 2
+    assert stats["requests_handled_locally"] == 1
     assert stats["cloud_routes"] == 1
     assert stats["cloud_requests_sent"] == 0
-    assert stats["rule_parser_overrides"] == 1
+    assert stats["rule_parser_overrides"] == 0
     assert stats["privacy_shield_blocks"] == 1
-    assert stats["route_counts"] == {"CLOUD": 1, "COMMAND": 1, "LOCAL": 1}
+    assert stats["route_counts"] == {"CLOUD": 1, "LOCAL": 1}
     assert stats["classifier_label_counts"] == {
-        "COMMAND": 1,
         "COMPLEX": 1,
         "SIMPLE": 1,
     }
-    assert stats["average_classification_time_ms"] == 30.0
-    assert stats["classification_timing_samples"] == 3
+    assert stats["average_classification_time_ms"] == 25.0
+    assert stats["median_classification_time_ms"] == 25.0
+    assert stats["classification_timing_samples"] == 2
     assert stats["average_answer_time_ms"] == 100.0
+    assert stats["median_answer_time_ms"] == 100.0
     assert stats["answer_timing_samples"] == 1
     assert stats["average_cloud_time_ms"] == 125.0
+    assert stats["median_cloud_time_ms"] == 125.0
     assert stats["cloud_timing_samples"] == 1
     assert stats["evaluation"] == {"cases": 1, "correct": 1, "accuracy": 1.0}
+    assert stats["evaluation_latency_ms"]["classification"] == {
+        "samples": 1,
+        "mean_ms": 40.0,
+        "median_ms": 40.0,
+    }
 
 
 def test_database_schema_and_rows_do_not_store_prompts_answers_or_api_keys(tmp_path):
@@ -125,6 +133,27 @@ def test_record_classification_failure_keeps_error_timing_without_error_text(tmp
     )
     stats = store.stats()
 
-    assert stats["route_counts"] == {"ERROR": 1}
-    assert stats["average_classification_time_ms"] == 15.5
+    assert stats["route_counts"] == {}
+    assert stats["average_classification_time_ms"] is None
     assert stats["evaluation"] == {"cases": 1, "correct": 0, "accuracy": 0.0}
+
+
+def test_history_and_activity_exclude_evaluation_rows_and_never_include_text(tmp_path):
+    store = MetricsStore(tmp_path / "metrics.db")
+    store.record(record())
+    store.record(
+        record(
+            request_kind="evaluation",
+            expected_label="SIMPLE",
+            evaluation_correct=True,
+            classifier_label="SIMPLE",
+        )
+    )
+
+    history = store.history()
+    activity = store.daily_activity(start_date="2000-01-01")
+
+    assert len(history) == 1
+    assert "request_text" not in history[0]
+    assert len(activity) == 1
+    assert activity[0]["total_requests"] == 1
