@@ -20,7 +20,6 @@ class FinalRoute(str, Enum):
     COMMAND = "COMMAND"
     COMMAND_UNSUPPORTED = "COMMAND_UNSUPPORTED"
     CLARIFICATION = "CLARIFICATION"
-    CLARIFICATION_NEEDED = "CLARIFICATION_NEEDED"
 
 
 @dataclass(frozen=True)
@@ -94,7 +93,7 @@ class SmartRouter:
         if classification.category is RequestCategory.COMMAND:
             return RoutingResponse(
                 classifier_label=classification.category,
-                final_route=FinalRoute.CLARIFICATION_NEEDED,
+                final_route=FinalRoute.CLARIFICATION,
                 rule_parser_overrode_classifier=False,
                 command_parser_matched=False,
                 classification_reason=classification.reason,

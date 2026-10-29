@@ -28,7 +28,6 @@ EXPECTED_ROUTES = {
     "COMMAND",
     "COMMAND_UNSUPPORTED",
     "CLARIFICATION",
-    "CLARIFICATION_NEEDED",
 }
 
 
@@ -119,10 +118,7 @@ def _latency_summary(rows: list[dict[str, Any]], field: str) -> dict[str, Any]:
 
 def summarize_results(rows: list[dict[str, Any]], total_cases: int) -> dict[str, Any]:
     correct = sum(row["classification_correct"] for row in rows)
-    route_correct = sum(
-        row["route_correct"] and row["actual_final_route"] != "CLARIFICATION_NEEDED"
-        for row in rows
-    )
+    route_correct = sum(row["route_correct"] for row in rows)
     processed = len(rows)
     category_metrics = {}
     for category in CATEGORIES:
@@ -154,7 +150,7 @@ def summarize_results(rows: list[dict[str, Any]], total_cases: int) -> dict[str,
         "route_accuracy": round(route_correct / processed, 4) if processed else None,
         "route_correct": route_correct,
         "clarification_outcomes": sum(
-            row["actual_final_route"] == "CLARIFICATION_NEEDED" for row in rows
+            row["actual_final_route"] == "CLARIFICATION" for row in rows
         ),
         "per_category_precision_recall": category_metrics,
         "confusion_matrix": {"labels": CONFUSION_LABELS, "rows": matrix},

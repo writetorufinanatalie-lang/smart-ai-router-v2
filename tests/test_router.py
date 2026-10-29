@@ -78,7 +78,7 @@ def test_command_label_with_no_whitelist_match_asks_for_clarification_without_ex
     response = router.route("Turn on an unsupported action.")
 
     assert response.classifier_label is RequestCategory.COMMAND
-    assert response.final_route is FinalRoute.CLARIFICATION_NEEDED
+    assert response.final_route is FinalRoute.CLARIFICATION
     assert response.rule_parser_overrode_classifier is False
     assert response.command_parser_matched is False
     assert response.execution_status == "clarification_needed"
@@ -95,7 +95,7 @@ def test_unrecognized_model_command_does_not_run_arbitrary_actions():
 
     response = router.route("Format the computer drive.")
 
-    assert response.final_route is FinalRoute.CLARIFICATION_NEEDED
+    assert response.final_route is FinalRoute.CLARIFICATION
     assert response.execution_status == "clarification_needed"
     assert response.message != "command not supported"
     assert registry.calls == []

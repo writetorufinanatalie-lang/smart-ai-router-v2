@@ -94,14 +94,14 @@ def test_command_label_without_parser_match_returns_and_records_clarification_ro
     assert response.status_code == 200
     body = response.json()
     assert body["classifier_label"] == "COMMAND"
-    assert body["final_route"] == "CLARIFICATION_NEEDED"
+    assert body["final_route"] == "CLARIFICATION"
     assert body["execution_status"] == "clarification_needed"
     assert "clarify" in body["message"]
     assert body["command_parser_matched"] is False
     assert body["command_result"] is None
     assert secret_text not in response.text
     stats = client.get("/stats").json()
-    assert stats["route_counts"] == {"CLARIFICATION_NEEDED": 1}
+    assert stats["route_counts"] == {"CLARIFICATION": 1}
 
     database_bytes = app.state.metrics_store.path.read_bytes()
     assert secret_text.encode() not in database_bytes

@@ -33,6 +33,33 @@ def test_evaluation_set_has_at_least_25_cases_and_required_coverage():
     assert detected_types >= {"email", "phone_number", "card_like_number"}
 
 
+def test_held_out_set_is_separate_and_has_fifteen_unseen_queries():
+    from pathlib import Path
+
+    import json
+
+    project_root = Path(__file__).resolve().parents[1]
+    main_cases = load_cases()
+    held_out_cases = json.loads(
+        (project_root / "tests" / "held_out_evaluation_cases.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert len(held_out_cases) == 15
+    assert not ({case["case_id"] for case in main_cases} & {
+        case["case_id"] for case in held_out_cases
+    })
+    assert {case["expected_category"] for case in held_out_cases} == {
+        "SIMPLE",
+        "COMPLEX",
+        "COMMAND",
+    }
+    assert any("dimmer" in case["request_text"] for case in held_out_cases)
+    assert any("Lights on please" in case["request_text"] for case in held_out_cases)
+    assert any("Switch the fan off" in case["request_text"] for case in held_out_cases)
+
+
 def test_m3_has_command_expectation_even_when_classifier_may_mislabel_it():
     case = next(case for case in load_cases() if case["case_id"] == "command_03_brightness_40_m3")
 
@@ -127,15 +154,39 @@ def test_summary_calculates_accuracy_precision_recall_confusion_and_latency():
     assert summary["latency_ms"]["answer_generation"]["samples"] == 1
 
 
-def test_clarification_outcomes_have_separate_count_and_never_count_as_correct_route():
+def test_ambiguous_clarification_counts_as_correct_when_expected():
     row = {
         "case_id": "clarify-one",
         "expected_category": "COMPLEX",
         "predicted_category": "COMMAND",
-        "expected_final_route": "CLARIFICATION_NEEDED",
-        "actual_final_route": "CLARIFICATION_NEEDED",
-        "classification_correct": False,
+        "expected_final_route": "CLARIFICATION",
+        "actual_final_route": "CLARIFICATION",
+        "classification_correct": True,
         "route_correct": True,
+        "classification_latency_ms": 10.0,
+        "answer_latency_ms": None,
+        "cloud_latency_ms": None,
+        "rule_parser_overrode_classifier": False,
+        "privacy_blocked": False,
+        "sensitive_data_types": [],
+    }
+
+    summary = summarize_results([row], total_cases=1)
+
+    assert summary["clarification_outcomes"] == 1
+    assert summary["route_correct"] == 1
+    assert summary["route_accuracy"] == 1.0
+
+
+def test_classifier_command_clarification_is_incorrect_when_cloud_was_expected():
+    row = {
+        "case_id": "misclassified-complex",
+        "expected_category": "COMPLEX",
+        "predicted_category": "COMMAND",
+        "expected_final_route": "CLOUD",
+        "actual_final_route": "CLARIFICATION",
+        "classification_correct": False,
+        "route_correct": False,
         "classification_latency_ms": 10.0,
         "answer_latency_ms": None,
         "cloud_latency_ms": None,

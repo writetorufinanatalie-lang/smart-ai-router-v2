@@ -1,0 +1,92 @@
+[
+  {
+    "case_id": "heldout_command_01_lights_on_please",
+    "request_text": "Lights on please.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_02_switch_fan_off",
+    "request_text": "Switch the fan off.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_03_make_light_dimmer",
+    "request_text": "Make the light dimmer.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "CLARIFICATION"
+  },
+  {
+    "case_id": "heldout_command_04_lower_brightness",
+    "request_text": "Lower the desk light brightness to 25 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_05_set_fan_to_speed",
+    "request_text": "Set the fan to speed 45.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_06_turn_desk_light_on",
+    "request_text": "Please turn the desk light on.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_07_raise_volume",
+    "request_text": "Raise the volume to 20 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "heldout_command_08_study_lamp",
+    "request_text": "Turn off my study lamp.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND_UNSUPPORTED"
+  },
+  {
+    "case_id": "heldout_simple_01_division",
+    "request_text": "What is 81 divided by 9?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "heldout_simple_02_author",
+    "request_text": "Who wrote Pride and Prejudice?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "heldout_simple_03_time_conversion",
+    "request_text": "Convert 90 minutes into hours.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "heldout_simple_04_color_mix",
+    "request_text": "What color do blue and yellow make when mixed?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "heldout_complex_01_volunteer_onboarding",
+    "request_text": "Draft a practical volunteer onboarding checklist with preparation, first-day steps, and a follow-up plan.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "heldout_complex_02_rent_or_buy",
+    "request_text": "Compare renting with buying a home for a young family, including financial tradeoffs, flexibility, and risks.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "heldout_complex_03_meal_plan",
+    "request_text": "Create a four-day vegetarian meal plan with balanced breakfasts and dinners, a shopping list, and simple preparation steps.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  }
+]
