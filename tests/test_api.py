@@ -23,7 +23,14 @@ def make_classification(category, latency=12.0):
     )
 
 
-def make_client(tmp_path, classifier, *, cloud_adapter=None, health_check=None):
+def make_client(
+    tmp_path,
+    classifier,
+    *,
+    cloud_adapter=None,
+    health_check=None,
+    evaluation_results_path=None,
+):
     adapter = cloud_adapter or CloudAdapter(api_key="")
     probe = health_check or (
         lambda: {
@@ -43,6 +50,7 @@ def make_client(tmp_path, classifier, *, cloud_adapter=None, health_check=None):
         router=router,
         cloud_adapter=adapter,
         ollama_health_check=probe,
+        evaluation_results_path=evaluation_results_path,
     )
     return TestClient(app), app
 
@@ -156,6 +164,9 @@ def test_post_evaluate_records_cases_and_computes_accuracy_from_actual_labels(tm
     assert body["accuracy"] == 0.5
     assert body["results"][0]["classifier_label"] == "SIMPLE"
     assert body["results"][0]["correct"] is True
+    assert body["results"][0]["rule_parser_overrode_classifier"] is False
+    assert body["results"][0]["privacy_blocked"] is False
+    assert body["results"][0]["sensitive_data_types"] == []
     assert body["results"][1]["classifier_label"] == "COMPLEX"
     assert body["results"][1]["correct"] is False
     assert "request_text" not in body["results"][0]
@@ -215,3 +226,37 @@ def test_route_classification_failure_is_persisted_without_error_or_input_text(t
     stats = client.get("/stats").json()
     assert stats["route_counts"] == {"ERROR": 1}
     assert stats["average_classification_time_ms"] == 18.0
+
+
+def test_evaluation_results_endpoint_serves_saved_test_lab_json(tmp_path):
+    results_path = tmp_path / "test_lab_results.json"
+    results_path.write_text(
+        '{"run_status":"completed","results":[{"case_id":"simple_01"}]}',
+        encoding="utf-8",
+    )
+    client, _app = make_client(
+        tmp_path,
+        lambda _text: make_classification(RequestCategory.SIMPLE),
+        evaluation_results_path=results_path,
+    )
+
+    response = client.get("/evaluation-results")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "run_status": "completed",
+        "results": [{"case_id": "simple_01"}],
+    }
+
+
+def test_evaluation_results_endpoint_reports_when_no_real_run_exists(tmp_path):
+    client, _app = make_client(
+        tmp_path,
+        lambda _text: make_classification(RequestCategory.SIMPLE),
+        evaluation_results_path=tmp_path / "missing_results.json",
+    )
+
+    response = client.get("/evaluation-results")
+
+    assert response.status_code == 200
+    assert response.json() == {"available": False, "run_status": "not_run", "results": []}

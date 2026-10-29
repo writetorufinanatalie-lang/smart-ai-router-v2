@@ -1,0 +1,230 @@
+[
+  {
+    "case_id": "simple_01_arithmetic",
+    "request_text": "What is 2 + 2?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_02_capital",
+    "request_text": "What is the capital of Japan?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_03_definition",
+    "request_text": "Define photosynthesis in one short sentence.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_04_geometry",
+    "request_text": "How many sides does a hexagon have?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_05_conversion",
+    "request_text": "Convert 3 kilometers to meters.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_06_acronym",
+    "request_text": "What does CPU stand for?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_07_planet",
+    "request_text": "Name the largest planet in our solar system.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_08_translation",
+    "request_text": "Translate 'good morning' into Spanish.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_09_percentage",
+    "request_text": "What is 15 percent of 200?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "simple_10_synonym",
+    "request_text": "Give one synonym for the word rapid.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "complex_01_story",
+    "request_text": "Write a 500-word story about a dragon who is afraid of heights.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_02_energy_comparison",
+    "request_text": "Compare solar, wind, and hydroelectric power, including advantages, disadvantages, and suitable use cases.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_03_tokyo_itinerary",
+    "request_text": "Plan a seven-day Tokyo trip for a first-time visitor, balancing major sights, local food, and rest.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_04_long_guide",
+    "request_text": "Write a detailed 1500-word beginner's guide to home energy efficiency with practical examples.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_05_remote_work_analysis",
+    "request_text": "Analyze the economic, social, and management tradeoffs of remote work in a balanced report.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_06_curriculum",
+    "request_text": "Design a six-week beginner curriculum for learning Python, with weekly objectives, exercises, and assessment criteria.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_07_quantum_explanation",
+    "request_text": "Explain how quantum computing differs from classical computing, including the core concepts and current limitations.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_08_launch_plan",
+    "request_text": "Create a comprehensive product launch plan covering research, positioning, channels, risks, and a three-month timeline.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "complex_09_policy_analysis",
+    "request_text": "Evaluate several urban transit policies and explain their likely costs, benefits, and distributional effects.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "command_01_light_on",
+    "request_text": "Turn on the desk light.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_02_light_off",
+    "request_text": "Switch off the light.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_03_brightness_40_m3",
+    "request_text": "Set the desk light brightness to 40 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_04_brightness_zero",
+    "request_text": "Set light brightness to 0 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_05_brightness_full",
+    "request_text": "Set the light brightness to 100 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_06_fan_on",
+    "request_text": "Turn on the fan.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_07_fan_off",
+    "request_text": "Switch off the fan.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_08_fan_speed_65",
+    "request_text": "Set fan speed to 65 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_09_fan_speed_zero",
+    "request_text": "Set fan speed to 0.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_10_volume_30",
+    "request_text": "Set the volume to 30 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_11_volume_full",
+    "request_text": "Set volume to 100 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "command_12_volume_zero",
+    "request_text": "Set volume to 0.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "unsupported_01_bedroom_light",
+    "request_text": "Turn on my bedroom light.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND_UNSUPPORTED"
+  },
+  {
+    "case_id": "unsupported_02_kitchen_fan",
+    "request_text": "Switch off the kitchen fan.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND_UNSUPPORTED"
+  },
+  {
+    "case_id": "ambiguous_01_brief_and_exhaustive",
+    "request_text": "Explain AI briefly but include every technical detail.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLARIFICATION"
+  },
+  {
+    "case_id": "ambiguous_02_short_and_comprehensive",
+    "request_text": "Give me a short but comprehensive explanation of neural networks with all details.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLARIFICATION"
+  },
+  {
+    "case_id": "privacy_01_email_and_phone",
+    "request_text": "Prepare a detailed customer report and reproduce this contact information: case.user@example.com and 202-555-0147.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "privacy_02_card_like_number",
+    "request_text": "Write a comprehensive compliance analysis of this card-like number 4242 4242 4242 4242 and explain the security risks.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  },
+  {
+    "case_id": "privacy_03_phone_number",
+    "request_text": "Write a 1000-word fictional incident report describing calls to +1 (415) 555-2671.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  }
+]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Callable
@@ -22,6 +23,9 @@ from backend.router import RoutingResponse, SmartRouter
 
 
 DEFAULT_METRICS_PATH = Path(__file__).resolve().parent.parent / "data" / "metrics.db"
+DEFAULT_EVALUATION_RESULTS_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "test_lab_results.json"
+)
 
 
 class RouteRequest(BaseModel):
@@ -106,16 +110,19 @@ def create_app(
     router: SmartRouter | None = None,
     cloud_adapter: CloudAdapter | None = None,
     ollama_health_check: Callable[[], dict[str, Any]] | None = None,
+    evaluation_results_path: str | Path | None = None,
 ) -> FastAPI:
     adapter = cloud_adapter or getattr(router, "_cloud_adapter", None) or CloudAdapter()
     request_router = router or SmartRouter(cloud_adapter=adapter)
     store = metrics_store or MetricsStore(database_path or DEFAULT_METRICS_PATH)
     health_check = ollama_health_check or _probe_ollama
+    results_path = Path(evaluation_results_path or DEFAULT_EVALUATION_RESULTS_PATH)
 
     app = FastAPI(title="Smart AI Router", version="0.1.0")
     app.state.router = request_router
     app.state.metrics_store = store
     app.state.cloud_adapter = adapter
+    app.state.evaluation_results_path = results_path
 
     def route_and_record(
         request_text: str,
@@ -156,6 +163,12 @@ def create_app(
     def get_stats() -> dict[str, object]:
         return store.stats()
 
+    @app.get("/evaluation-results")
+    def get_evaluation_results() -> dict[str, Any]:
+        if not results_path.is_file():
+            return {"available": False, "run_status": "not_run", "results": []}
+        return json.loads(results_path.read_text(encoding="utf-8"))
+
     @app.get("/health")
     def get_health() -> dict[str, Any]:
         storage_available = store.ping()
@@ -193,6 +206,11 @@ def create_app(
                         "answer_generation_latency_ms"
                     ],
                     "cloud_latency_ms": payload["cloud_latency_ms"],
+                    "rule_parser_overrode_classifier": payload[
+                        "rule_parser_overrode_classifier"
+                    ],
+                    "privacy_blocked": payload["privacy_blocked"],
+                    "sensitive_data_types": payload["sensitive_data_types"],
                     "execution_status": payload["execution_status"],
                 }
             )

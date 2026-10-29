@@ -3,10 +3,12 @@
 import json
 from types import SimpleNamespace
 
+import httpx
 import pytest
 
 from backend.classifier import (
     ClassificationError,
+    LOCAL_OLLAMA_HOST,
     RequestCategory,
     classify_request,
 )
@@ -84,3 +86,36 @@ def test_reports_local_model_failure_without_inventing_category():
 
     assert error.value.latency_ms is not None
     assert error.value.latency_ms >= 0
+
+
+def test_default_classification_uses_loopback_and_makes_no_external_network_call(monkeypatch):
+    requested_hosts = []
+
+    def guarded_request(_client, method, url, *args, **kwargs):
+        resolved_url = _client.base_url.join(httpx.URL(url))
+        host = resolved_url.host
+        requested_hosts.append(host)
+        if host not in {"127.0.0.1", "localhost"}:
+            raise AssertionError(f"Classification attempted external host: {host}")
+        response_payload = {
+            "model": "qwen2.5:1.5b",
+            "created_at": "2026-01-01T00:00:00Z",
+            "done": True,
+            "done_reason": "stop",
+            "message": {
+                "role": "assistant",
+                "content": json.dumps(
+                    {"category": "SIMPLE", "reason": "Mocked local response."}
+                ),
+            },
+        }
+        request = httpx.Request(method, resolved_url)
+        return httpx.Response(200, json=response_payload, request=request)
+
+    monkeypatch.setattr(httpx.Client, "request", guarded_request)
+
+    result = classify_request("What is 2 + 2?")
+
+    assert result.category is RequestCategory.SIMPLE
+    assert LOCAL_OLLAMA_HOST == "http://127.0.0.1:11434"
+    assert requested_hosts == ["127.0.0.1"]
