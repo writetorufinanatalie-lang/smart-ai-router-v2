@@ -68,7 +68,7 @@ def test_whitelisted_command_can_override_complex_classifier_label():
     assert response.execution_status == "executed_locally"
 
 
-def test_command_label_alone_never_executes_unrecognized_text():
+def test_command_label_with_no_whitelist_match_asks_for_clarification_without_execution():
     registry = ExecutionSpy()
     router = SmartRouter(
         classifier=lambda _text: classification(RequestCategory.COMMAND),
@@ -78,11 +78,11 @@ def test_command_label_alone_never_executes_unrecognized_text():
     response = router.route("Turn on an unsupported action.")
 
     assert response.classifier_label is RequestCategory.COMMAND
-    assert response.final_route is FinalRoute.COMMAND_UNSUPPORTED
+    assert response.final_route is FinalRoute.CLARIFICATION_NEEDED
     assert response.rule_parser_overrode_classifier is False
     assert response.command_parser_matched is False
-    assert response.execution_status == "command_not_supported"
-    assert response.message == "command not supported"
+    assert response.execution_status == "clarification_needed"
+    assert "clarify" in response.message
     assert registry.calls == []
 
 
@@ -95,8 +95,9 @@ def test_unrecognized_model_command_does_not_run_arbitrary_actions():
 
     response = router.route("Format the computer drive.")
 
-    assert response.final_route is FinalRoute.COMMAND_UNSUPPORTED
-    assert response.message == "command not supported"
+    assert response.final_route is FinalRoute.CLARIFICATION_NEEDED
+    assert response.execution_status == "clarification_needed"
+    assert response.message != "command not supported"
     assert registry.calls == []
 
 

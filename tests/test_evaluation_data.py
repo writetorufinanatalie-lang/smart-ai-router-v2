@@ -125,3 +125,27 @@ def test_summary_calculates_accuracy_precision_recall_confusion_and_latency():
         "max_ms": 20.0,
     }
     assert summary["latency_ms"]["answer_generation"]["samples"] == 1
+
+
+def test_clarification_outcomes_have_separate_count_and_never_count_as_correct_route():
+    row = {
+        "case_id": "clarify-one",
+        "expected_category": "COMPLEX",
+        "predicted_category": "COMMAND",
+        "expected_final_route": "CLARIFICATION_NEEDED",
+        "actual_final_route": "CLARIFICATION_NEEDED",
+        "classification_correct": False,
+        "route_correct": True,
+        "classification_latency_ms": 10.0,
+        "answer_latency_ms": None,
+        "cloud_latency_ms": None,
+        "rule_parser_overrode_classifier": False,
+        "privacy_blocked": False,
+        "sensitive_data_types": [],
+    }
+
+    summary = summarize_results([row], total_cases=1)
+
+    assert summary["clarification_outcomes"] == 1
+    assert summary["route_correct"] == 0
+    assert summary["route_accuracy"] == 0.0

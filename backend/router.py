@@ -20,6 +20,7 @@ class FinalRoute(str, Enum):
     COMMAND = "COMMAND"
     COMMAND_UNSUPPORTED = "COMMAND_UNSUPPORTED"
     CLARIFICATION = "CLARIFICATION"
+    CLARIFICATION_NEEDED = "CLARIFICATION_NEEDED"
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,20 @@ class SmartRouter:
             )
 
         if classification.category is RequestCategory.COMMAND:
-            return self._unsupported(classification, parsed, False)
+            return RoutingResponse(
+                classifier_label=classification.category,
+                final_route=FinalRoute.CLARIFICATION_NEEDED,
+                rule_parser_overrode_classifier=False,
+                command_parser_matched=False,
+                classification_reason=classification.reason,
+                classification_reason_source=classification.reason_source,
+                classification_latency_ms=classification.latency_ms,
+                execution_status="clarification_needed",
+                message=(
+                    "I couldn't match that to a supported device command. "
+                    "Could you clarify what you want to do?"
+                ),
+            )
 
         ambiguity = detect_ambiguity(request_text)
         if ambiguity is not None:

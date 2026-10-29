@@ -82,6 +82,31 @@ def test_post_route_returns_answer_and_persists_separate_real_timings(tmp_path):
     assert stats["route_counts"] == {"LOCAL": 1}
 
 
+def test_command_label_without_parser_match_returns_and_records_clarification_route(tmp_path):
+    secret_text = "Format the computer drive and retain this private request"
+    client, app = make_client(
+        tmp_path,
+        lambda _text: make_classification(RequestCategory.COMMAND),
+    )
+
+    response = client.post("/route", json={"request_text": secret_text})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["classifier_label"] == "COMMAND"
+    assert body["final_route"] == "CLARIFICATION_NEEDED"
+    assert body["execution_status"] == "clarification_needed"
+    assert "clarify" in body["message"]
+    assert body["command_parser_matched"] is False
+    assert body["command_result"] is None
+    assert secret_text not in response.text
+    stats = client.get("/stats").json()
+    assert stats["route_counts"] == {"CLARIFICATION_NEEDED": 1}
+
+    database_bytes = app.state.metrics_store.path.read_bytes()
+    assert secret_text.encode() not in database_bytes
+
+
 def test_cloud_time_is_stored_separately_only_when_sender_was_called(tmp_path):
     def failing_sender(_text, _key):
         raise OSError("test provider failure")
