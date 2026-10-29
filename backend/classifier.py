@@ -27,6 +27,10 @@ class RequestCategory(str, Enum):
 class ClassificationError(RuntimeError):
     """Raised when the local model cannot return a valid classification."""
 
+    def __init__(self, message: str, *, latency_ms: float | None = None) -> None:
+        super().__init__(message)
+        self.latency_ms = latency_ms
+
 
 @dataclass(frozen=True)
 class ClassificationResult:
@@ -130,9 +134,17 @@ def classify_request(
             latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
             reason_source="model",
         )
-    except ClassificationError:
+    except ClassificationError as error:
+        if error.latency_ms is None:
+            error.latency_ms = round((time.perf_counter() - started_at) * 1000, 2)
         raise
     except (json.JSONDecodeError, TypeError, ValueError) as error:
-        raise ClassificationError("The local model returned malformed classification data.") from error
+        raise ClassificationError(
+            "The local model returned malformed classification data.",
+            latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+        ) from error
     except Exception as error:
-        raise ClassificationError("The local Ollama classification request failed.") from error
+        raise ClassificationError(
+            "The local Ollama classification request failed.",
+            latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+        ) from error

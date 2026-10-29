@@ -43,6 +43,8 @@ def test_provider_exception_returns_failure_without_fabricating_answer():
     assert result.status == "cloud_request_failed"
     assert result.processed is False
     assert result.request_sent_to_cloud is True
+    assert result.cloud_latency_ms is not None
+    assert result.cloud_latency_ms >= 0
 
 
 def test_empty_provider_response_is_not_reported_as_an_answer():

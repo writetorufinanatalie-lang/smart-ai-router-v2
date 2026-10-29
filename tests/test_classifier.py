@@ -79,5 +79,8 @@ def test_reports_local_model_failure_without_inventing_category():
         def chat(self, **kwargs):
             raise OSError("Ollama is unavailable")
 
-    with pytest.raises(ClassificationError, match="local Ollama"):
+    with pytest.raises(ClassificationError, match="local Ollama") as error:
         classify_request("What is 2 + 2?", client=FailingClient())
+
+    assert error.value.latency_ms is not None
+    assert error.value.latency_ms >= 0

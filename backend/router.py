@@ -37,6 +37,7 @@ class RoutingResponse:
     message: str | None = None
     answer: str | None = None
     answer_generation_latency_ms: float | None = None
+    cloud_latency_ms: float | None = None
     command_result: dict[str, Any] | None = None
     classification_location: str = "local"
     external_llm_api_used: bool = False
@@ -147,6 +148,7 @@ class SmartRouter:
             execution_status=cloud_result.status,
             message=cloud_result.message,
             answer=cloud_result.answer,
+            cloud_latency_ms=cloud_result.cloud_latency_ms,
             external_llm_api_used=cloud_result.request_sent_to_cloud,
             request_sent_to_cloud=cloud_result.request_sent_to_cloud,
             privacy_blocked=cloud_result.privacy_blocked,
