@@ -1,0 +1,405 @@
+{
+  "schema_version": 1,
+  "run_id": "b978130c830d452686f2dc13035096dd",
+  "run_status": "completed",
+  "data_source": "real_local_classifier_and_router_runs",
+  "model": "qwen2.5:1.5b",
+  "classification_location": "local",
+  "started_at": "2026-10-29T10:22:52.658577+00:00",
+  "finished_at": "2026-10-29T10:23:54.035518+00:00",
+  "summary": {
+    "cases_completed": 18,
+    "cases_in_set": 18,
+    "classification_accuracy": 0.5556,
+    "classification_correct": 10,
+    "route_accuracy": 0.6667,
+    "route_correct": 12,
+    "clarification_outcomes": 6,
+    "per_category_precision_recall": {
+      "SIMPLE": {
+        "precision": 0.125,
+        "recall": 0.5,
+        "support": 2,
+        "predicted": 8,
+        "true_positives": 1
+      },
+      "COMPLEX": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1,
+        "predicted": 1,
+        "true_positives": 0
+      },
+      "COMMAND": {
+        "precision": 1.0,
+        "recall": 0.6,
+        "support": 15,
+        "predicted": 9,
+        "true_positives": 9
+      }
+    },
+    "confusion_matrix": {
+      "labels": [
+        "SIMPLE",
+        "COMPLEX",
+        "COMMAND",
+        "ERROR"
+      ],
+      "rows": {
+        "SIMPLE": {
+          "SIMPLE": 1,
+          "COMPLEX": 1,
+          "COMMAND": 0,
+          "ERROR": 0
+        },
+        "COMPLEX": {
+          "SIMPLE": 1,
+          "COMPLEX": 0,
+          "COMMAND": 0,
+          "ERROR": 0
+        },
+        "COMMAND": {
+          "SIMPLE": 6,
+          "COMPLEX": 0,
+          "COMMAND": 9,
+          "ERROR": 0
+        }
+      }
+    },
+    "latency_ms": {
+      "classification": {
+        "samples": 18,
+        "mean_ms": 2467.83,
+        "median_ms": 2367.07,
+        "max_ms": 3106.72
+      },
+      "answer_generation": {
+        "samples": 1,
+        "mean_ms": 5993.14,
+        "median_ms": 5993.14,
+        "max_ms": 5993.14
+      },
+      "cloud": {
+        "samples": 0,
+        "mean_ms": null,
+        "median_ms": null,
+        "max_ms": null
+      }
+    },
+    "rule_parser_overrides": [
+      {
+        "case_id": "generalize_command_05_brightness_of_desk_light",
+        "classifier_label": "SIMPLE",
+        "final_route": "COMMAND"
+      },
+      {
+        "case_id": "generalize_command_06_dim_desk_light_value",
+        "classifier_label": "SIMPLE",
+        "final_route": "COMMAND"
+      },
+      {
+        "case_id": "generalize_command_10_sound_volume_value",
+        "classifier_label": "SIMPLE",
+        "final_route": "COMMAND"
+      },
+      {
+        "case_id": "generalize_command_11_lower_volume_value",
+        "classifier_label": "SIMPLE",
+        "final_route": "COMMAND"
+      }
+    ],
+    "privacy_shield_blocks": [],
+    "classification_errors": 0,
+    "external_cloud_requests": 0
+  },
+  "results": [
+    {
+      "case_id": "generalize_command_01_power_up_desk_light",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2374.83,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_02_activate_desk_light",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2187.62,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_03_switch_desk_light_off",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": true,
+      "route_correct": false,
+      "classification_latency_ms": 2289.11,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    },
+    {
+      "case_id": "generalize_command_04_shut_off_fan",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2346.73,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_05_brightness_of_desk_light",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": false,
+      "route_correct": true,
+      "classification_latency_ms": 3106.72,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": true,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_06_dim_desk_light_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": false,
+      "route_correct": true,
+      "classification_latency_ms": 2158.9,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": true,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_07_brighten_light_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2292.68,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_08_fan_speed_at_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2136.45,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_09_run_fan_at_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2369.33,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_10_sound_volume_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": false,
+      "route_correct": true,
+      "classification_latency_ms": 2526.59,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": true,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_11_lower_volume_value",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "COMMAND",
+      "classification_correct": false,
+      "route_correct": true,
+      "classification_latency_ms": 2227.34,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": true,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "executed_locally"
+    },
+    {
+      "case_id": "generalize_command_12_desk_light_on_now",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": true,
+      "route_correct": false,
+      "classification_latency_ms": 2346.84,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    },
+    {
+      "case_id": "generalize_command_13_power_down_fan",
+      "expected_category": "COMMAND",
+      "predicted_category": "COMMAND",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": true,
+      "route_correct": false,
+      "classification_latency_ms": 2365.44,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    },
+    {
+      "case_id": "generalize_command_14_fan_zero_speed",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "COMMAND",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": false,
+      "route_correct": false,
+      "classification_latency_ms": 2837.97,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    },
+    {
+      "case_id": "generalize_command_15_unspecified_dimming",
+      "expected_category": "COMMAND",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "CLARIFICATION",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": false,
+      "route_correct": true,
+      "classification_latency_ms": 2578.26,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    },
+    {
+      "case_id": "generalize_lookalike_01_bright_room",
+      "expected_category": "SIMPLE",
+      "predicted_category": "COMPLEX",
+      "expected_final_route": "LOCAL",
+      "actual_final_route": "CLOUD",
+      "classification_correct": false,
+      "route_correct": false,
+      "classification_latency_ms": 2924.28,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "cloud_not_configured"
+    },
+    {
+      "case_id": "generalize_lookalike_02_fan_curve",
+      "expected_category": "SIMPLE",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "LOCAL",
+      "actual_final_route": "LOCAL",
+      "classification_correct": true,
+      "route_correct": true,
+      "classification_latency_ms": 2368.7,
+      "answer_latency_ms": 5993.14,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "completed_locally"
+    },
+    {
+      "case_id": "generalize_lookalike_03_story_light",
+      "expected_category": "COMPLEX",
+      "predicted_category": "SIMPLE",
+      "expected_final_route": "CLOUD",
+      "actual_final_route": "CLARIFICATION",
+      "classification_correct": false,
+      "route_correct": false,
+      "classification_latency_ms": 2983.13,
+      "answer_latency_ms": null,
+      "cloud_latency_ms": null,
+      "rule_parser_overrode_classifier": false,
+      "privacy_blocked": false,
+      "sensitive_data_types": [],
+      "execution_status": "clarification_needed"
+    }
+  ]
+}
