@@ -40,6 +40,7 @@ function displayBackendUnavailable() {
   setText("commandCount", "—");
   setText("clarificationCount", "—");
   showUnavailableAnalytics("Backend data unavailable.");
+  displayPrivacyHistoryUnavailable();
 }
 
 function displayHealthUnavailable() {
@@ -58,6 +59,7 @@ function displayHealthUnavailable() {
   setText("deviceDetail", "Backend device state could not be read.");
   setText("deviceStatusNote", "Device state unavailable until the backend responds.");
   byId("deviceList").replaceChildren();
+  displayPrivacyHealthUnavailable();
 }
 
 function displayStatsUnavailable() {
@@ -125,6 +127,73 @@ function applyHealth(payload) {
     "providerStatus",
     cloud.provider_configured ? "Configured" : "Not configured",
   );
+  applyPrivacyHealth(payload);
+}
+
+function setPrivacyStatus(lightId, titleId, detailId, label, state, detail) {
+  setStatus(lightId, titleId, label, state);
+  setText(detailId, detail);
+}
+
+function applyPrivacyHealth(payload) {
+  const backend = payload.backend ?? {};
+  const ollama = payload.ollama ?? {};
+  const cloud = payload.cloud ?? {};
+  const backendConnected = backend.status === "ok";
+  setPrivacyStatus(
+    "privacyBackendLight", "privacyBackendStatus", "privacyBackendDetail",
+    backendConnected ? "Connected" : "Disconnected",
+    backendConnected ? "online" : "error",
+    backendConnected ? "FastAPI returned backend status ok." : "FastAPI reports that the backend or its storage is unavailable.",
+  );
+
+  const runtimeConnected = ollama.service_available === true;
+  setPrivacyStatus(
+    "privacyOllamaLight", "privacyOllamaStatus", "privacyOllamaDetail",
+    runtimeConnected ? "Connected" : "Disconnected",
+    runtimeConnected ? "online" : "error",
+    runtimeConnected ? "Ollama responded to the local health check." : "Ollama did not respond to the local health check.",
+  );
+
+  const modelConnected = ollama.model_available === true;
+  const modelStatus = modelConnected ? "Connected" : runtimeConnected ? "Not configured" : "Disconnected";
+  const modelState = modelConnected ? "online" : runtimeConnected ? "muted" : "error";
+  setPrivacyStatus(
+    "privacyModelLight", "privacyModelStatus", "privacyModelDetail",
+    modelStatus, modelState,
+    modelConnected ? "The selected local model is installed and available." : runtimeConnected ? "Ollama is responding, but the selected model is not installed." : "Model availability cannot be confirmed while Ollama is disconnected.",
+  );
+  setText("privacyModelName", ollama.model ?? "Unavailable");
+
+  const cloudConfigured = cloud.configured === true;
+  setPrivacyStatus(
+    "privacyCloudLight", "privacyCloudStatus", "privacyCloudDetail",
+    cloudConfigured ? "Connected" : "Not configured",
+    cloudConfigured ? "online" : "muted",
+    cloudConfigured
+      ? "Required provider configuration is present; /health does not test provider connectivity."
+      : "Required cloud configuration is incomplete; cloud requests cannot currently be processed.",
+  );
+
+  const metricsConnected = backend.metrics_store_available === true;
+  setPrivacyStatus(
+    "privacyMetricsLight", "privacyMetricsStatus", "privacyMetricsDetail",
+    metricsConnected ? "Connected" : "Disconnected",
+    metricsConnected ? "online" : "error",
+    metricsConnected ? "The backend reports its metrics store is available." : "The backend reports its metrics store is unavailable.",
+  );
+  setText("privacyLastChecked", new Date().toLocaleTimeString());
+}
+
+function displayPrivacyHealthUnavailable() {
+  const unavailable = "Could not read /health; this status is unavailable.";
+  setText("privacyLastChecked", new Date().toLocaleTimeString());
+  setPrivacyStatus("privacyBackendLight", "privacyBackendStatus", "privacyBackendDetail", "Disconnected", "error", unavailable);
+  setPrivacyStatus("privacyOllamaLight", "privacyOllamaStatus", "privacyOllamaDetail", "Disconnected", "error", unavailable);
+  setPrivacyStatus("privacyModelLight", "privacyModelStatus", "privacyModelDetail", "Disconnected", "error", unavailable);
+  setText("privacyModelName", "Unavailable");
+  setPrivacyStatus("privacyCloudLight", "privacyCloudStatus", "privacyCloudDetail", "Disconnected", "error", "Cloud configuration could not be read from /health.");
+  setPrivacyStatus("privacyMetricsLight", "privacyMetricsStatus", "privacyMetricsDetail", "Disconnected", "error", unavailable);
 }
 
 function applyStats(payload) {
@@ -331,6 +400,75 @@ function renderHistory(payload) {
   }
 }
 
+function renderPrivacyHistory(payload) {
+  const body = byId("privacyHistoryRows");
+  const rows = payload.items ?? [];
+  const blockedCount = rows.filter((record) => record.privacy_blocked === true).length;
+  const cloudHandoffCount = rows.filter((record) => record.request_sent_to_cloud === true).length;
+  setText("privacyRequestsObserved", rows.length);
+  setText("privacyBlockedCount", blockedCount);
+  setText("privacyCloudHandoffCount", cloudHandoffCount);
+  body.replaceChildren();
+  if (rows.length === 0) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.className = "table-empty";
+    cell.colSpan = 6;
+    cell.textContent = "No data yet.";
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  const typeLabels = {
+    email: "Email pattern",
+    phone_number: "Phone-number pattern",
+    card_like_number: "Card-like number pattern",
+  };
+  for (const record of rows) {
+    const detectedTypes = Array.isArray(record.sensitive_data_types) ? record.sensitive_data_types : [];
+    const shieldResult = record.privacy_blocked === true
+      ? "Blocked before cloud handoff"
+      : detectedTypes.length > 0
+        ? "Pattern recorded"
+        : "No match recorded";
+    const values = [
+      formatTimestamp(record.created_at),
+      record.classifier_label ?? "Unavailable",
+      record.final_route ?? "Unavailable",
+      shieldResult,
+      detectedTypes.map((type) => typeLabels[type] ?? "Sensitive pattern").join(", ") || "None recorded",
+      record.request_sent_to_cloud === true ? "Sent" : "Not sent",
+    ];
+    const row = document.createElement("tr");
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    body.append(row);
+  }
+}
+
+function renderRequestHistory(payload) {
+  renderHistory(payload);
+  renderPrivacyHistory(payload);
+}
+
+function displayPrivacyHistoryUnavailable() {
+  setText("privacyRequestsObserved", "Unavailable");
+  setText("privacyBlockedCount", "Unavailable");
+  setText("privacyCloudHandoffCount", "Unavailable");
+  const body = byId("privacyHistoryRows");
+  if (!body) return;
+  const row = document.createElement("tr");
+  const cell = document.createElement("td");
+  cell.className = "table-empty";
+  cell.colSpan = 6;
+  cell.textContent = "Recent privacy metadata is unavailable.";
+  row.append(cell);
+  body.replaceChildren(row);
+}
+
 function showUnavailableAnalytics(message) {
   for (const id of ["overviewCategories", "overviewCommandOutcomes", "analyticsCategories", "analyticsCommandOutcomes", "dailyActivityChart", "routeDistributionChart", "latencySummary"]) {
     showEmptyState(id, message);
@@ -433,7 +571,7 @@ async function refreshOverview() {
     if (!applyUnavailable(result.devices, applyDevices, "Simulated device state is unavailable.")) {
       displayDevicesUnavailable();
     }
-    if (!applyUnavailable(result.history, renderHistory, "Request history is unavailable.")) {
+    if (!applyUnavailable(result.history, renderRequestHistory, "Request history is unavailable.")) {
       const body = byId("historyRows");
       const row = document.createElement("tr");
       const cell = document.createElement("td");
@@ -442,6 +580,7 @@ async function refreshOverview() {
       cell.textContent = "Request history is unavailable.";
       row.append(cell);
       body.replaceChildren(row);
+      displayPrivacyHistoryUnavailable();
     }
     if (!applyUnavailable(result.activity, renderDailyActivity, "Daily activity is unavailable.")) {
       showEmptyState("dailyActivityChart", "Daily activity is unavailable.");
@@ -469,6 +608,7 @@ function switchView(name) {
     "live-routing": byId("liveRoutingView"),
     analytics: byId("analyticsView"),
     "test-lab": byId("testLabView"),
+    privacy: byId("privacyView"),
   };
   const selectedView = views[name] ? name : "overview";
   for (const [viewName, view] of Object.entries(views)) view.hidden = viewName !== selectedView;
@@ -480,8 +620,8 @@ function switchView(name) {
     const indicator = button.querySelector(".nav-indicator");
     if (indicator) indicator.hidden = !selected;
   }
-  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING", analytics: "ANALYTICS", "test-lab": "TEST LAB" };
-  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing", analytics: "Analytics", "test-lab": "Test Lab" };
+  const labels = { overview: "OVERVIEW", playground: "AI PLAYGROUND", "live-routing": "LIVE ROUTING", analytics: "ANALYTICS", "test-lab": "TEST LAB", privacy: "PRIVACY & SYSTEM" };
+  const titles = { overview: "Overview", playground: "AI Playground", "live-routing": "Live Routing", analytics: "Analytics", "test-lab": "Test Lab", privacy: "Privacy & System" };
   document.querySelector(".breadcrumbs strong").textContent = labels[selectedView];
   document.title = `Smart AI Router · ${titles[selectedView]}`;
 }

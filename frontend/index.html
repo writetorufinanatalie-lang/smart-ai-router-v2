@@ -53,10 +53,10 @@
             <span>Test Lab</span>
             <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
-          <button class="nav-item" type="button" disabled aria-label="Privacy and System, available in a later stage">
+          <button class="nav-item" id="navPrivacy" type="button" data-view-button="privacy">
             <span class="nav-icon" aria-hidden="true">◈</span>
             <span>Privacy &amp; System</span>
-            <span class="nav-soon">NEXT</span>
+            <span class="nav-indicator" aria-hidden="true" hidden></span>
           </button>
         </nav>
 
@@ -317,6 +317,83 @@
           <section class="test-suite-section timestamped-section" aria-labelledby="timestampedTitle">
             <div class="section-heading"><div><div class="eyebrow">NEW RUNS</div><h2 id="timestampedTitle">Timestamped runs</h2></div></div>
             <div class="timestamped-runs" id="timestampedRuns"><p class="empty-state">No timestamped runs yet.</p></div>
+          </section>
+        </section>
+
+        <section id="privacyView" data-view="privacy" hidden aria-labelledby="privacyTitle">
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow"><span class="eyebrow-line"></span> SYSTEM STATUS &amp; DATA FLOW</div>
+              <h1 id="privacyTitle">Privacy &amp; System</h1>
+              <p class="page-description">Live service and configuration status, plus recent privacy-related request metadata.</p>
+            </div>
+            <span class="snapshot-time"><span class="snapshot-label">LAST CHECK</span><time id="privacyLastChecked">Checking…</time></span>
+          </div>
+
+          <section class="privacy-status-grid" aria-label="Live service status from backend health">
+            <article class="status-card privacy-status-card">
+              <div class="card-topline"><span class="card-icon icon-cyan" aria-hidden="true">⌂</span><span class="card-kicker">FASTAPI BACKEND</span></div>
+              <div class="status-value-row"><h2 id="privacyBackendStatus">Checking</h2><span class="status-light" id="privacyBackendLight" data-state="checking" aria-hidden="true"></span></div>
+              <p id="privacyBackendDetail">Reading /health…</p>
+            </article>
+            <article class="status-card privacy-status-card">
+              <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">⌁</span><span class="card-kicker">OLLAMA RUNTIME</span></div>
+              <div class="status-value-row"><h2 id="privacyOllamaStatus">Checking</h2><span class="status-light" id="privacyOllamaLight" data-state="checking" aria-hidden="true"></span></div>
+              <p id="privacyOllamaDetail">Reading /health…</p>
+            </article>
+            <article class="status-card privacy-status-card">
+              <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">✳</span><span class="card-kicker">LOCAL MODEL</span></div>
+              <div class="status-value-row"><h2 id="privacyModelStatus">Checking</h2><span class="status-light" id="privacyModelLight" data-state="checking" aria-hidden="true"></span></div>
+              <p id="privacyModelDetail">Reading model availability…</p>
+              <div class="card-footer"><span>MODEL</span><strong id="privacyModelName">—</strong></div>
+            </article>
+            <article class="status-card privacy-status-card">
+              <div class="card-topline"><span class="card-icon icon-amber" aria-hidden="true">↗</span><span class="card-kicker">CLOUD CONFIGURATION</span></div>
+              <div class="status-value-row"><h2 id="privacyCloudStatus">Checking</h2><span class="status-light" id="privacyCloudLight" data-state="checking" aria-hidden="true"></span></div>
+              <p id="privacyCloudDetail">Reading configuration…</p>
+            </article>
+            <article class="status-card privacy-status-card">
+              <div class="card-topline"><span class="card-icon icon-green" aria-hidden="true">▤</span><span class="card-kicker">METRICS STORE</span></div>
+              <div class="status-value-row"><h2 id="privacyMetricsStatus">Checking</h2><span class="status-light" id="privacyMetricsLight" data-state="checking" aria-hidden="true"></span></div>
+              <p id="privacyMetricsDetail">Reading metrics-store status…</p>
+            </article>
+          </section>
+
+          <section class="privacy-guidance-grid" aria-label="Data flow and Privacy Shield explanation">
+            <article class="panel privacy-guidance-card">
+              <div class="eyebrow">PROCESSING LOCATION</div>
+              <h2>What runs locally</h2>
+              <p>Classification uses the local Ollama runtime and selected local model. Simple answers are generated locally. Whitelisted device commands are parsed and simulated in the backend’s in-memory registry.</p>
+            </article>
+            <article class="panel privacy-guidance-card">
+              <div class="eyebrow">CLOUD ROUTE</div>
+              <h2>What could leave this machine</h2>
+              <p>If a cloud provider and its configuration are present and a request is actually sent on the cloud route, the request text is passed to that provider. The current backend reports whether cloud configuration is present and whether each recent request was sent; configuration status alone is not a provider connectivity test.</p>
+            </article>
+            <article class="panel privacy-guidance-card shield-guidance-card">
+              <div class="eyebrow">PATTERN-BASED CHECK</div>
+              <h2>What the Privacy Shield checks</h2>
+              <p>The local Shield looks for common email-address, phone-number, and card-like number patterns before cloud handoff. It can miss unusual, obfuscated, split, or otherwise differently formatted values, and it does not identify every kind of sensitive information. A request with no recorded match is not proof that it contains no sensitive data.</p>
+            </article>
+          </section>
+
+          <section class="panel privacy-history-panel" aria-labelledby="privacyHistoryTitle">
+            <div class="panel-heading">
+              <div><div class="eyebrow">LATEST REQUEST METADATA · NO REQUEST TEXT</div><h2 id="privacyHistoryTitle">Recent privacy summary</h2></div>
+              <span class="live-tag"><span aria-hidden="true"></span> /HISTORY</span>
+            </div>
+            <div class="privacy-kpis" id="privacyKpis">
+              <div><span>RECENT REQUESTS</span><strong id="privacyRequestsObserved">—</strong></div>
+              <div><span>SHIELD BLOCKS</span><strong id="privacyBlockedCount">—</strong></div>
+              <div><span>CLOUD HANDOFFS</span><strong id="privacyCloudHandoffCount">—</strong></div>
+            </div>
+            <div class="history-table-wrap">
+              <table class="history-table privacy-history-table">
+                <thead><tr><th scope="col">Time</th><th scope="col">Category</th><th scope="col">Route</th><th scope="col">Privacy Shield</th><th scope="col">Detected pattern types</th><th scope="col">Cloud handoff</th></tr></thead>
+                <tbody id="privacyHistoryRows"><tr><td class="table-empty" colspan="6">Loading recent metadata…</td></tr></tbody>
+              </table>
+            </div>
+            <p class="history-footnote">This summary uses only fields returned by /history. It does not display request content or credentials.</p>
           </section>
         </section>
       </main>
