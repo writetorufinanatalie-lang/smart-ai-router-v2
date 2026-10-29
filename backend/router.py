@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import re
 from typing import Any, Callable
 
 from backend.classifier import ClassificationResult, RequestCategory, classify_request
@@ -12,6 +13,33 @@ from backend.command_parser import CommandParseResult, parse_command
 from backend.command_registry import SimulatedDeviceRegistry
 from backend.fallback import detect_ambiguity
 from backend.local_answer import LocalAnswerError, LocalAnswerGenerator
+
+
+_DEVICE_CONTROL_REQUEST = re.compile(
+    r"\b(?:light|lights|desk light|fan|volume|brightness)\b.*"
+    r"\b(?:on|off|turn|switch|power|activate|deactivate|set|adjust|dim|"
+    r"brighten|lower|raise|increase|decrease|make)\b|"
+    r"\b(?:turn|switch|power|activate|deactivate|set|adjust|dim|brighten|"
+    r"lower|raise|increase|decrease|make)\b.*"
+    r"\b(?:light|lights|desk light|fan|volume|brightness)\b",
+    re.IGNORECASE,
+)
+_DEVICE_CONTROL_CLAIM = re.compile(
+    r"\b(?:i|we)\s+(?:have\s+)?(?:turned|switched|powered|activated|"
+    r"deactivated|set|adjusted|dimmed|brightened|lowered|raised|changed)\b|"
+    r"\b(?:the|your|my)\s+[a-z0-9'-]+(?:\s+[a-z0-9'-]+){0,2}\s+"
+    r"(?:is|are|was|were)\s+(?:now\s+)?(?:on|off|set|adjusted)\b|"
+    r"\b[a-z0-9'-]+(?:\s+[a-z0-9'-]+){0,2}\s+"
+    r"(?:turned|switched|powered)\s+(?:on|off)\b|"
+    r"\b(?:light|lights|desk light|fan|volume)\b.{0,48}\b"
+    r"(?:is|are|was|were)\s+(?:now\s+)?(?:on|off|set|adjusted)\b|"
+    r"\b(?:light|lights|desk light|fan|volume)\b.{0,32}\b"
+    r"(?:turned|switched|powered)\s+(?:on|off)\b",
+    re.IGNORECASE,
+)
+_NO_DEVICE_CONTROL_MESSAGE = (
+    "No device was controlled. This request did not match a supported device command."
+)
 
 
 class FinalRoute(str, Enum):
@@ -69,6 +97,22 @@ class SmartRouter:
         parsed = self._command_parser(request_text)
         parser_overrode = parsed.recognized_command and classification.category is not RequestCategory.COMMAND
 
+        if parsed.clarification_needed:
+            return RoutingResponse(
+                classifier_label=classification.category,
+                final_route=FinalRoute.CLARIFICATION,
+                rule_parser_overrode_classifier=False,
+                command_parser_matched=False,
+                classification_reason=classification.reason,
+                classification_reason_source=classification.reason_source,
+                classification_latency_ms=classification.latency_ms,
+                execution_status="clarification_needed",
+                message=(
+                    "I couldn't safely interpret that as one supported device command. "
+                    "Please clarify the single action you want."
+                ),
+            )
+
         if parsed.recognized_command:
             if parsed.command is None:
                 return self._unsupported(classification, parsed, parser_overrode)
@@ -121,6 +165,18 @@ class SmartRouter:
             )
 
         if classification.category is RequestCategory.SIMPLE:
+            if _DEVICE_CONTROL_REQUEST.search(request_text):
+                return RoutingResponse(
+                    classifier_label=classification.category,
+                    final_route=FinalRoute.LOCAL,
+                    rule_parser_overrode_classifier=False,
+                    command_parser_matched=False,
+                    classification_reason=classification.reason,
+                    classification_reason_source=classification.reason_source,
+                    classification_latency_ms=classification.latency_ms,
+                    execution_status="completed_locally",
+                    message=_NO_DEVICE_CONTROL_MESSAGE,
+                )
             try:
                 local_answer = self._local_answer_generator.generate(request_text)
             except LocalAnswerError as error:
@@ -145,7 +201,11 @@ class SmartRouter:
                 classification_reason_source=classification.reason_source,
                 classification_latency_ms=classification.latency_ms,
                 execution_status="completed_locally",
-                answer=local_answer.answer,
+                answer=(
+                    _NO_DEVICE_CONTROL_MESSAGE
+                    if _DEVICE_CONTROL_CLAIM.search(local_answer.answer)
+                    else local_answer.answer
+                ),
                 answer_generation_latency_ms=local_answer.latency_ms,
             )
 

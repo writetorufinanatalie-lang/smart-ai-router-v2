@@ -1,5 +1,7 @@
 """Tests for routing, command overrides, and safe failure behavior."""
 
+import pytest
+
 from backend.classifier import ClassificationResult, RequestCategory
 from backend.cloud_adapter import CLOUD_FAILURE_MESSAGE, CloudAdapter
 from backend.command_parser import ParsedCommand, CommandAction
@@ -187,6 +189,98 @@ def test_simple_route_reports_pending_local_answer_without_inventing_one():
     assert response.classification_latency_ms == 12.5
     assert generator.calls == ["What is 2 + 2?"]
     assert response.request_sent_to_cloud is False
+
+
+def test_simple_lights_on_request_is_executed_only_by_the_whitelist_parser():
+    generator = FakeAnswerGenerator("The lights are on now.")
+    registry = ExecutionSpy()
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        local_answer_generator=generator,
+        command_registry=registry,
+    )
+
+    response = router.route("lights on please")
+
+    assert response.final_route is FinalRoute.COMMAND
+    assert response.execution_status == "executed_locally"
+    assert response.command_result["device"] == "desk_light"
+    assert response.answer is None
+    assert generator.calls == []
+    assert len(registry.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "How do I turn on the fan?",
+        "Don't turn off the light.",
+        "If it's dark, turn on the light.",
+        "Turn on the desk light and switch off the fan.",
+    ],
+)
+def test_unsafe_command_forms_ask_for_clarification_and_never_execute(text):
+    registry = ExecutionSpy()
+    generator = FakeAnswerGenerator()
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        command_registry=registry,
+        local_answer_generator=generator,
+    )
+
+    response = router.route(text)
+
+    assert response.final_route is FinalRoute.CLARIFICATION
+    assert response.execution_status == "clarification_needed"
+    assert registry.calls == []
+    assert generator.calls == []
+
+
+@pytest.mark.parametrize(
+    ("text", "answer"),
+    [
+        ("How does a ceiling fan work?", "A ceiling fan moves air."),
+        ("What is a light year?", "A light-year measures distance."),
+    ],
+)
+def test_normal_questions_are_not_caught_by_device_control_guard(text, answer):
+    generator = FakeAnswerGenerator(answer)
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        local_answer_generator=generator,
+    )
+
+    response = router.route(text)
+
+    assert response.final_route is FinalRoute.LOCAL
+    assert response.answer == answer
+    assert generator.calls == [text]
+
+
+def test_local_answer_claiming_device_control_is_replaced_with_safe_message():
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        local_answer_generator=FakeAnswerGenerator("I turned on the desk light."),
+    )
+
+    response = router.route("What is the desk light used for?")
+
+    assert response.answer == (
+        "No device was controlled. This request did not match a supported device command."
+    )
+
+
+def test_local_answer_claim_about_another_device_is_also_replaced():
+    router = SmartRouter(
+        classifier=lambda _text: classification(RequestCategory.SIMPLE),
+        local_answer_generator=FakeAnswerGenerator("The television is on now."),
+    )
+
+    response = router.route("What does television status mean?")
+
+    assert response.answer == (
+        "No device was controlled. This request did not match a supported device command."
+    )
 
 
 def test_simple_route_reports_clear_error_when_local_answer_generation_fails():

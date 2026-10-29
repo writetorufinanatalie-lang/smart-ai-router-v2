@@ -1,0 +1,110 @@
+[
+  {
+    "case_id": "generalize_command_01_power_up_desk_light",
+    "request_text": "Power up the desk light.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_02_activate_desk_light",
+    "request_text": "Activate the desk light.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_03_switch_desk_light_off",
+    "request_text": "Could you switch the desk light off?",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_04_shut_off_fan",
+    "request_text": "Shut off the fan.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_05_brightness_of_desk_light",
+    "request_text": "Set brightness of my desk light to 62 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_06_dim_desk_light_value",
+    "request_text": "Dim the desk light to 35 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_07_brighten_light_value",
+    "request_text": "Make the light brighter to 80 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_08_fan_speed_at_value",
+    "request_text": "Put the fan speed at 55 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_09_run_fan_at_value",
+    "request_text": "Run the fan at 30 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_10_sound_volume_value",
+    "request_text": "Set sound volume to 45.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_11_lower_volume_value",
+    "request_text": "Lower the volume to 15 percent.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_12_desk_light_on_now",
+    "request_text": "Turn the desk light on now.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_13_power_down_fan",
+    "request_text": "Can you power down the fan?",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_14_fan_zero_speed",
+    "request_text": "Set the fan to 0 percent speed.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "COMMAND"
+  },
+  {
+    "case_id": "generalize_command_15_unspecified_dimming",
+    "request_text": "Make my desk light less bright.",
+    "expected_category": "COMMAND",
+    "expected_final_route": "CLARIFICATION"
+  },
+  {
+    "case_id": "generalize_lookalike_01_bright_room",
+    "request_text": "Explain why brighter rooms can feel more cheerful.",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "generalize_lookalike_02_fan_curve",
+    "request_text": "What is a fan curve in computer hardware?",
+    "expected_category": "SIMPLE",
+    "expected_final_route": "LOCAL"
+  },
+  {
+    "case_id": "generalize_lookalike_03_story_light",
+    "request_text": "Write a short story about a light that learns to dim.",
+    "expected_category": "COMPLEX",
+    "expected_final_route": "CLOUD"
+  }
+]

@@ -60,6 +60,31 @@ def test_held_out_set_is_separate_and_has_fifteen_unseen_queries():
     assert any("Switch the fan off" in case["request_text"] for case in held_out_cases)
 
 
+def test_new_generalization_set_is_separate_with_command_lookalikes():
+    from pathlib import Path
+
+    import json
+
+    project_root = Path(__file__).resolve().parents[1]
+    earlier_held_out = json.loads(
+        (project_root / "tests" / "held_out_evaluation_cases.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    new_cases = json.loads(
+        (project_root / "tests" / "generalization_evaluation_cases.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert len(new_cases) == 18
+    assert not ({case["case_id"] for case in earlier_held_out} & {
+        case["case_id"] for case in new_cases
+    })
+    assert sum(case["expected_category"] == "COMMAND" for case in new_cases) == 15
+    assert sum(case["expected_category"] != "COMMAND" for case in new_cases) == 3
+
+
 def test_m3_has_command_expectation_even_when_classifier_may_mislabel_it():
     case = next(case for case in load_cases() if case["case_id"] == "command_03_brightness_40_m3")
 
