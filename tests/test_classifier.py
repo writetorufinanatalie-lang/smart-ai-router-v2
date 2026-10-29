@@ -39,6 +39,7 @@ def test_classifies_all_supported_categories(category, query_text):
 
     assert result.category is category
     assert result.reason == "Test classification."
+    assert result.reason_source == "model"
     assert result.model == "qwen2.5:1.5b"
     assert result.latency_ms >= 0
     assert result.processing_location == "local"
@@ -46,6 +47,7 @@ def test_classifies_all_supported_categories(category, query_text):
     assert len(fake_client.calls) == 1
     assert fake_client.calls[0]["model"] == "qwen2.5:1.5b"
     assert fake_client.calls[0]["options"] == {"temperature": 0}
+    assert fake_client.calls[0]["keep_alive"] == "30m"
 
 
 def test_rejects_empty_request_without_calling_model():

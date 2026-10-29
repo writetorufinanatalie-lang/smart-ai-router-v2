@@ -13,6 +13,7 @@ import ollama
 
 LOCAL_OLLAMA_HOST = "http://127.0.0.1:11434"
 DEFAULT_MODEL = "qwen2.5:1.5b"
+MODEL_KEEP_ALIVE = "30m"
 
 
 class RequestCategory(str, Enum):
@@ -35,6 +36,7 @@ class ClassificationResult:
     reason: str
     model: str
     latency_ms: float
+    reason_source: str = "model"
     processing_location: str = "local"
     external_llm_api_used: bool = False
 
@@ -103,6 +105,7 @@ def classify_request(
             ],
             format=_CLASSIFICATION_SCHEMA,
             options={"temperature": 0},
+            keep_alive=MODEL_KEEP_ALIVE,
         )
         payload = json.loads(_get_response_content(response))
         if not isinstance(payload, dict):
@@ -125,6 +128,7 @@ def classify_request(
             reason=raw_reason.strip(),
             model=model,
             latency_ms=round((time.perf_counter() - started_at) * 1000, 2),
+            reason_source="model",
         )
     except ClassificationError:
         raise
