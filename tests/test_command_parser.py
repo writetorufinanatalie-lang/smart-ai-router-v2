@@ -35,6 +35,7 @@ def test_parses_whitelisted_command_forms(text, device, action, value):
     "text",
     [
         "Turn on the bedroom light.",
+        "turn on my bedroom light",
         "Run notepad.",
         "Turn on the light and delete my files.",
         "Set the fan speed to 101%.",
@@ -55,6 +56,15 @@ def test_marks_out_of_range_whitelisted_intent_as_recognized_but_unsupported():
     assert result.recognized_command is True
     assert result.supported is False
     assert "between 0 and 100" in result.reason
+
+
+def test_identifies_unknown_device_command_separately():
+    result = parse_command("turn on my bedroom light")
+
+    assert result.recognized_command is True
+    assert result.supported is False
+    assert result.unsupported_device is True
+    assert result.reason == "device not supported"
 
 
 def test_does_not_match_command_phrase_inside_unrelated_sentence():

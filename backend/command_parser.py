@@ -31,6 +31,7 @@ class CommandParseResult:
     command: ParsedCommand | None
     recognized_command: bool
     reason: str | None = None
+    unsupported_device: bool = False
 
     @property
     def supported(self) -> bool:
@@ -64,6 +65,10 @@ _LEVEL_PATTERNS = (
         ),
         "volume",
     ),
+)
+_UNKNOWN_DEVICE_ON_OFF = re.compile(
+    r"(?:please )?(?:turn|switch) (?:on|off) (?:(?:the|my) )?"
+    r"(?P<device>(?:[a-z0-9'-]+ )+(?:light|fan))(?: please)?"
 )
 
 
@@ -116,5 +121,17 @@ def parse_command(text: str) -> CommandParseResult:
         else:
             command = ParsedCommand("volume", CommandAction.SET_VOLUME, value)
         return CommandParseResult(command, True)
+
+    unknown_device = _UNKNOWN_DEVICE_ON_OFF.fullmatch(normalized)
+    if unknown_device:
+        device = unknown_device.group("device")
+        if device not in {"desk light", "light", "fan"}:
+            return CommandParseResult(
+                None,
+                True,
+                "device not supported",
+                unsupported_device=True,
+            )
+        return CommandParseResult(None, True, "command form not supported")
 
     return CommandParseResult(None, False, "no whitelisted command pattern matched")
