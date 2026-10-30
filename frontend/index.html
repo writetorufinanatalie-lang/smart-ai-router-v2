@@ -105,28 +105,28 @@
         <section class="status-grid" aria-label="System status">
           <article class="status-card status-card-backend">
             <div class="card-topline"><span class="card-icon icon-cyan" aria-hidden="true">⌂</span><span class="card-kicker">API SERVICE</span></div>
-            <div class="status-value-row"><h2 id="backendStatus">Checking</h2><span class="status-light" id="backendLight" data-state="checking" aria-hidden="true"></span></div>
+            <div class="status-value-row"><h2 id="backendStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="backendLight" data-state="checking" aria-hidden="true"></span></div>
             <p id="backendDetail">Connecting to the local FastAPI service…</p>
             <div class="card-footer"><span>METRICS STORE</span><strong id="metricsStatus">Checking</strong></div>
           </article>
 
           <article class="status-card status-card-model">
             <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">✳</span><span class="card-kicker">LOCAL SLM</span></div>
-            <div class="status-value-row"><h2 id="modelStatus">Checking</h2><span class="status-light" id="modelLight" data-state="checking" aria-hidden="true"></span></div>
+            <div class="status-value-row"><h2 id="modelStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="modelLight" data-state="checking" aria-hidden="true"></span></div>
             <p id="modelDetail">Checking Ollama and model availability…</p>
             <div class="card-footer"><span>MODEL</span><strong id="modelName">—</strong></div>
           </article>
 
           <article class="status-card status-card-cloud">
             <div class="card-topline"><span class="card-icon icon-amber" aria-hidden="true">↗</span><span class="card-kicker">CLOUD ROUTE</span></div>
-            <div class="status-value-row"><h2 id="cloudStatus">Checking</h2><span class="status-light" id="cloudLight" data-state="checking" aria-hidden="true"></span></div>
+            <div class="status-value-row"><h2 id="cloudStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="cloudLight" data-state="checking" aria-hidden="true"></span></div>
             <p id="cloudDetail">Reading provider configuration…</p>
             <div class="card-footer"><span>PROVIDER</span><strong id="providerStatus">Checking</strong></div>
           </article>
 
           <article class="status-card status-card-devices">
             <div class="card-topline"><span class="card-icon icon-green" aria-hidden="true">⌁</span><span class="card-kicker">DEVICE REGISTRY</span></div>
-            <div class="status-value-row"><h2 id="deviceCount">Checking</h2><span class="status-light" id="deviceLight" data-state="checking" aria-hidden="true"></span></div>
+            <div class="status-value-row"><h2 id="deviceCount" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="deviceLight" data-state="checking" aria-hidden="true"></span></div>
             <p id="deviceDetail">Loading simulated device state…</p>
             <div class="card-footer"><span>STATE LIFETIME</span><strong>Until restart</strong></div>
           </article>
@@ -276,11 +276,11 @@
           <section class="chart-grid" aria-label="Request charts">
             <article class="panel chart-panel">
               <div class="panel-heading"><div><div class="eyebrow">DAILY ACTIVITY</div><h2>Requests over time</h2></div><span class="chart-source">/ACTIVITY · NORMAL REQUESTS</span></div>
-              <div id="dailyActivityChart" class="chart-host"><p class="empty-state">Loading real request data…</p></div>
+              <div id="dailyActivityChart" class="chart-host" tabindex="0" role="group" aria-label="Daily activity chart; scroll horizontally on narrow screens"><p class="empty-state">Loading real request data…</p></div>
             </article>
             <article class="panel chart-panel">
               <div class="panel-heading"><div><div class="eyebrow">FINAL ROUTES</div><h2>Route distribution</h2></div><span class="chart-source">/STATS · NORMAL REQUESTS</span></div>
-              <div id="routeDistributionChart" class="chart-host"><p class="empty-state">Loading real request data…</p></div>
+              <div id="routeDistributionChart" class="chart-host" tabindex="0" role="group" aria-label="Route distribution chart; scroll horizontally on narrow screens"><p class="empty-state">Loading real request data…</p></div>
             </article>
           </section>
           <section class="panel latency-panel" aria-labelledby="latencyTitle">
@@ -289,7 +289,7 @@
           </section>
           <section class="panel history-panel" aria-labelledby="historyTitle">
             <div class="panel-heading"><div><div class="eyebrow">METADATA ONLY · NO REQUEST TEXT</div><h2 id="historyTitle">Recent request history</h2></div><span class="live-tag"><span aria-hidden="true"></span> /HISTORY</span></div>
-            <div class="history-table-wrap">
+            <div class="history-table-wrap" tabindex="0" role="region" aria-label="Recent request history table; scroll horizontally on small screens">
               <table class="history-table">
                 <thead><tr><th scope="col">Time</th><th scope="col">Category</th><th scope="col">Route</th><th scope="col">Override</th><th scope="col">Classification</th><th scope="col">Answer</th><th scope="col">Cloud</th></tr></thead>
                 <tbody id="historyRows"><tr><td class="table-empty" colspan="7">Loading real request data…</td></tr></tbody>
@@ -333,28 +333,28 @@
           <section class="privacy-status-grid" aria-label="Live service status from backend health">
             <article class="status-card privacy-status-card">
               <div class="card-topline"><span class="card-icon icon-cyan" aria-hidden="true">⌂</span><span class="card-kicker">FASTAPI BACKEND</span></div>
-              <div class="status-value-row"><h2 id="privacyBackendStatus">Checking</h2><span class="status-light" id="privacyBackendLight" data-state="checking" aria-hidden="true"></span></div>
+              <div class="status-value-row"><h2 id="privacyBackendStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="privacyBackendLight" data-state="checking" aria-hidden="true"></span></div>
               <p id="privacyBackendDetail">Reading /health…</p>
             </article>
             <article class="status-card privacy-status-card">
               <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">⌁</span><span class="card-kicker">OLLAMA RUNTIME</span></div>
-              <div class="status-value-row"><h2 id="privacyOllamaStatus">Checking</h2><span class="status-light" id="privacyOllamaLight" data-state="checking" aria-hidden="true"></span></div>
+              <div class="status-value-row"><h2 id="privacyOllamaStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="privacyOllamaLight" data-state="checking" aria-hidden="true"></span></div>
               <p id="privacyOllamaDetail">Reading /health…</p>
             </article>
             <article class="status-card privacy-status-card">
               <div class="card-topline"><span class="card-icon icon-violet" aria-hidden="true">✳</span><span class="card-kicker">LOCAL MODEL</span></div>
-              <div class="status-value-row"><h2 id="privacyModelStatus">Checking</h2><span class="status-light" id="privacyModelLight" data-state="checking" aria-hidden="true"></span></div>
+              <div class="status-value-row"><h2 id="privacyModelStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="privacyModelLight" data-state="checking" aria-hidden="true"></span></div>
               <p id="privacyModelDetail">Reading model availability…</p>
               <div class="card-footer"><span>MODEL</span><strong id="privacyModelName">—</strong></div>
             </article>
             <article class="status-card privacy-status-card">
               <div class="card-topline"><span class="card-icon icon-amber" aria-hidden="true">↗</span><span class="card-kicker">CLOUD CONFIGURATION</span></div>
-              <div class="status-value-row"><h2 id="privacyCloudStatus">Checking</h2><span class="status-light" id="privacyCloudLight" data-state="checking" aria-hidden="true"></span></div>
+              <div class="status-value-row"><h2 id="privacyCloudStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="privacyCloudLight" data-state="checking" aria-hidden="true"></span></div>
               <p id="privacyCloudDetail">Reading configuration…</p>
             </article>
             <article class="status-card privacy-status-card">
               <div class="card-topline"><span class="card-icon icon-green" aria-hidden="true">▤</span><span class="card-kicker">METRICS STORE</span></div>
-              <div class="status-value-row"><h2 id="privacyMetricsStatus">Checking</h2><span class="status-light" id="privacyMetricsLight" data-state="checking" aria-hidden="true"></span></div>
+              <div class="status-value-row"><h2 id="privacyMetricsStatus" aria-live="polite" aria-atomic="true">Checking</h2><span class="status-light" id="privacyMetricsLight" data-state="checking" aria-hidden="true"></span></div>
               <p id="privacyMetricsDetail">Reading metrics-store status…</p>
             </article>
           </section>
@@ -387,7 +387,7 @@
               <div><span>SHIELD BLOCKS</span><strong id="privacyBlockedCount">—</strong></div>
               <div><span>CLOUD HANDOFFS</span><strong id="privacyCloudHandoffCount">—</strong></div>
             </div>
-            <div class="history-table-wrap">
+            <div class="history-table-wrap" tabindex="0" role="region" aria-label="Recent privacy summary table; scroll horizontally on small screens">
               <table class="history-table privacy-history-table">
                 <thead><tr><th scope="col">Time</th><th scope="col">Category</th><th scope="col">Route</th><th scope="col">Privacy Shield</th><th scope="col">Detected pattern types</th><th scope="col">Cloud handoff</th></tr></thead>
                 <tbody id="privacyHistoryRows"><tr><td class="table-empty" colspan="6">Loading recent metadata…</td></tr></tbody>

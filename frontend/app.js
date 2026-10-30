@@ -695,6 +695,9 @@ function renderReportSummary(summary) {
   } else {
     const matrix = document.createElement("div");
     matrix.className = "matrix-wrap";
+    matrix.tabIndex = 0;
+    matrix.setAttribute("role", "region");
+    matrix.setAttribute("aria-label", "Confusion matrix; scroll horizontally to inspect all categories");
     const table = document.createElement("table");
     table.className = "confusion-table";
     const head = document.createElement("thead");
@@ -745,6 +748,9 @@ function renderCaseResults(container, results, filterId) {
 
   const scroll = document.createElement("div");
   scroll.className = "case-table-wrap";
+  scroll.tabIndex = 0;
+  scroll.setAttribute("role", "region");
+  scroll.setAttribute("aria-label", "Evaluation case results; scroll horizontally to inspect all columns");
   const table = document.createElement("table");
   table.className = "case-table";
   const thead = document.createElement("thead");
@@ -976,9 +982,12 @@ async function refreshTestLabReports(announce = true) {
   } catch (error) {
     savedSuitesHost.replaceChildren();
     timestampedRunsHost.replaceChildren();
-    addText(savedSuitesHost, "p", "report-error", "Could not load saved reports from the backend.");
+    const unavailableMessage = error.status === 0
+      ? "Backend disconnected. Saved evaluation reports could not be loaded."
+      : `Test Lab reports are unavailable (HTTP ${error.status}).`;
+    addText(savedSuitesHost, "p", "report-error", unavailableMessage);
     addText(timestampedRunsHost, "p", "empty-state", "Timestamped run data is unavailable.");
-    setTestLabStatus(error.message || "Could not load Test Lab data.", true);
+    setTestLabStatus(unavailableMessage, true);
   } finally {
     refreshTestLabButton.disabled = false;
     setRunButtonsDisabled(Boolean(activeEvaluationSuiteId || evaluationRunStarting));
@@ -1055,7 +1064,7 @@ function answerProduction(payload) {
   return "Generated";
 }
 
-function updateLiveRouting(payload, requestText, received = true, pending = false) {
+function updateLiveRouting(payload, requestText, received = true, pending = false, failure = null) {
   const diagram = byId("routeDiagram");
   const outcome = byId("routingOutcome");
   const routeNodes = [...diagram.querySelectorAll("[data-route-node]")];
@@ -1073,8 +1082,11 @@ function updateLiveRouting(payload, requestText, received = true, pending = fals
     detail = "No route is highlighted while the latest request is being processed.";
   } else if (!received) {
     state = "unavailable";
-    title = "Backend response unavailable";
-    detail = "No backend route was received, so no route is highlighted.";
+    const disconnected = failure?.status === 0;
+    title = disconnected ? "Backend disconnected" : "Backend response unavailable";
+    detail = disconnected
+      ? "The backend could not be reached; no route is highlighted."
+      : "No backend route was received, so no route is highlighted.";
   } else if (payload?.privacy_blocked === true || executionStatus === "blocked_by_privacy_shield") {
     state = "blocked";
     title = "Blocked by Privacy Shield";
@@ -1163,7 +1175,8 @@ function renderResult(requestText, payload, failureMessage = null) {
   }
   addMetaGrid(card, payload);
   sessionLog.append(card);
-  card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  card.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   sessionItems += 1;
   playgroundStatus.textContent = isClarification ? "Request needs clarification. Edit it and resend." : title;
 }
@@ -1194,7 +1207,7 @@ requestForm.addEventListener("submit", async (event) => {
   } catch (error) {
     pending.remove();
     latestRouteResult = null;
-    updateLiveRouting(null, requestText, false);
+    updateLiveRouting(null, requestText, false, false, error);
     renderResult(requestText, { final_route: "ERROR", execution_status: "request_failed" }, error.message || "The router request failed.");
   } finally {
     playgroundBusy = false;
