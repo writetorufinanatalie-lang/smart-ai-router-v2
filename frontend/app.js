@@ -11,6 +11,28 @@ let activeEvaluationRunId = null;
 let activeEvaluationSuiteId = null;
 let evaluationRunStarting = false;
 const SVG_NS = "http://www.w3.org/2000/svg";
+const themeToggle = byId("themeToggle");
+
+function applyTheme(theme, persist = false) {
+  const normalizedTheme = theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = normalizedTheme;
+  const nextTheme = normalizedTheme === "dark" ? "light" : "dark";
+  themeToggle.setAttribute("aria-label", `Switch to ${nextTheme} theme`);
+  themeToggle.querySelector("span").textContent = `${nextTheme[0].toUpperCase()}${nextTheme.slice(1)} theme`;
+  byId("themeColorMeta").content = getComputedStyle(document.documentElement).getPropertyValue("--theme-color-meta").trim();
+  if (persist) {
+    try {
+      localStorage.setItem("smart-router-theme", normalizedTheme);
+    } catch (_) {
+      // The selected theme remains active for this page even when storage is blocked.
+    }
+  }
+}
+
+applyTheme(document.documentElement.dataset.theme || "dark");
+themeToggle.addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark", true);
+});
 
 function setText(id, value) {
   byId(id).textContent = value == null ? "—" : String(value);
@@ -271,7 +293,7 @@ function renderRouteDistribution(routeCounts) {
     showEmptyState("routeDistributionChart", "No data yet.");
     return;
   }
-  const colors = { LOCAL: "#62d6c5", CLOUD: "#a99aff", COMMAND: "#f3bd73", COMMAND_UNSUPPORTED: "#ef7b88", CLARIFICATION: "#9eacc0", ERROR: "#bd7883" };
+  const routeClasses = { LOCAL: "route-local", CLOUD: "route-cloud", COMMAND: "route-command", COMMAND_UNSUPPORTED: "route-unsupported", CLARIFICATION: "route-clarification", ERROR: "route-error" };
   const width = 660;
   const rowHeight = 39;
   const height = entries.length * rowHeight + 15;
@@ -283,7 +305,7 @@ function renderRouteDistribution(routeCounts) {
     const y = index * rowHeight + 5;
     svg.append(svgElement("text", { x: 0, y: y + 12, class: "chart-label" }, route.replaceAll("_", " ")));
     svg.append(svgElement("rect", { x: 174, y, width: 400, height: 18, rx: 5, class: "chart-track" }));
-    svg.append(svgElement("rect", { x: 174, y, width: Math.max(2, 400 * count / maxValue), height: 18, rx: 5, fill: colors[route] ?? "#8b9ab0", class: "chart-bar" }));
+    svg.append(svgElement("rect", { x: 174, y, width: Math.max(2, 400 * count / maxValue), height: 18, rx: 5, class: `chart-bar ${routeClasses[route] ?? "route-error"}` }));
     svg.append(svgElement("text", { x: 590, y: y + 13, class: "chart-value" }, count));
   });
   host.replaceChildren(svg);
@@ -681,7 +703,13 @@ function renderReportSummary(summary) {
       body.append(row);
     }
     table.append(head, body);
-    categorySection.append(table);
+    const metricsScroll = document.createElement("div");
+    metricsScroll.className = "matrix-wrap";
+    metricsScroll.tabIndex = 0;
+    metricsScroll.setAttribute("role", "region");
+    metricsScroll.setAttribute("aria-label", "Per-category metrics table; scroll horizontally to inspect all columns");
+    metricsScroll.append(table);
+    categorySection.append(metricsScroll);
   }
   wrapper.append(categorySection);
 
