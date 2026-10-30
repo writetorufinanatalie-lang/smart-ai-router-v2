@@ -1147,7 +1147,9 @@ function renderResult(requestText, payload, failureMessage = null) {
   const noDevice = executionStatus === "device_control_not_performed";
   const title = failureMessage ? "Request failed" : isClarification ? "Request needs clarification" : noDevice ? "No device was controlled" : payload.privacy_blocked ? "Blocked by Privacy Shield" : payload.execution_status === "local_generation_failed" ? "Local answer unavailable" : payload.message || "Router response";
   addText(header, "strong", "result-title", title);
-  addText(header, "span", `route-badge route-${String(payload.final_route ?? "error").toLowerCase()}`, payload.final_route ?? "ERROR");
+  const routeLabel = payload.final_route ?? "ERROR";
+  const routeBadge = addText(header, "span", `route-badge route-${String(routeLabel).toLowerCase()}`, routeLabel);
+  routeBadge.setAttribute("aria-label", `Final route: ${routeLabel}`);
   card.append(header);
   addText(card, "p", "submitted-request", requestText);
 
