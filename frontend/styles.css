@@ -756,7 +756,7 @@ h1 { margin: 10px 0 7px; font-size: var(--font-page); font-weight: 580; letter-s
 .example-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 17px; }
 .example-chip { min-height: 32px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 99px; color: var(--fg-748588e9); background: var(--surface-f267455d); cursor: pointer; font-size: var(--font-small); transition: border-color .18s ease, color .18s ease, background .18s ease; }
 .example-chip:hover { border-color: var(--line-a72e8f0c); color: var(--fg-89e44ed2); background: var(--surface-a3e2a427); }
-.session-log { display: grid; align-content: start; gap: 12px; max-height: min(52vh, 580px); min-height: 190px; overflow: auto; padding: 14px 2px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); scrollbar-color: var(--art-5d7b5861) transparent; }
+.session-log { display: grid; align-content: start; gap: 12px; min-height: 190px; padding: 14px 2px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .session-empty { display: grid; min-height: 160px; align-content: center; justify-items: center; gap: 8px; color: var(--fg-c1241492); text-align: center; }
 .session-empty strong { color: var(--fg-61b658b9); font-size: var(--font-small); font-weight: 580; }
 .session-empty > span:last-child { font-size: var(--font-small); }
