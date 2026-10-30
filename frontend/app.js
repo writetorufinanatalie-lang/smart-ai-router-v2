@@ -18,6 +18,8 @@ function applyTheme(theme, persist = false) {
   document.documentElement.dataset.theme = normalizedTheme;
   const nextTheme = normalizedTheme === "dark" ? "light" : "dark";
   themeToggle.setAttribute("aria-label", `Switch to ${nextTheme} theme`);
+  themeToggle.setAttribute("title", `Switch to ${nextTheme} theme`);
+  themeToggle.setAttribute("aria-pressed", String(normalizedTheme === "light"));
   themeToggle.querySelector("span").textContent = `${nextTheme[0].toUpperCase()}${nextTheme.slice(1)} theme`;
   byId("themeColorMeta").content = getComputedStyle(document.documentElement).getPropertyValue("--theme-color-meta").trim();
   if (persist) {
