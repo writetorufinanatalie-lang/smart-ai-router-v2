@@ -8,6 +8,12 @@ export class ApiError extends Error {
   }
 }
 
+function notifyBackendUnreachable() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("backend:unreachable"));
+  }
+}
+
 export async function getJson(path, { signal } = {}) {
   let response;
   try {
@@ -20,6 +26,7 @@ export async function getJson(path, { signal } = {}) {
     });
   } catch (error) {
     if (error.name === "AbortError") throw error;
+    notifyBackendUnreachable();
     throw new ApiError("The backend could not be reached.");
   }
 
@@ -49,6 +56,7 @@ export async function postJson(path, body, { signal } = {}) {
     });
   } catch (error) {
     if (error.name === "AbortError") throw error;
+    notifyBackendUnreachable();
     throw new ApiError("The backend could not be reached.");
   }
 

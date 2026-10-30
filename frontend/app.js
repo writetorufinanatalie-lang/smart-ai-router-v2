@@ -4,6 +4,8 @@ const byId = (id) => document.getElementById(id);
 const refreshButton = byId("refreshStatus");
 const toast = byId("toast");
 let activeController = null;
+let backendDisconnected = false;
+let backendFailureVersion = 0;
 let playgroundBusy = false;
 let sessionItems = 0;
 let latestRouteResult = null;
@@ -56,6 +58,8 @@ function showToast(message) {
 }
 
 function displayBackendUnavailable() {
+  const wasDisconnected = backendDisconnected;
+  backendDisconnected = true;
   displayHealthUnavailable();
   setText("normalRequests", "—");
   setText("evaluationCases", "—");
@@ -63,26 +67,37 @@ function displayBackendUnavailable() {
   setText("cloudCount", "—");
   setText("commandCount", "—");
   setText("clarificationCount", "—");
-  showUnavailableAnalytics("Backend data unavailable.");
+  showUnavailableAnalytics("Backend unreachable. Start the server and refresh.");
   displayPrivacyHistoryUnavailable();
+  setText("lastChecked", new Date().toLocaleTimeString());
+  if (!wasDisconnected) {
+    showToast("Backend unreachable. Start the server and refresh.");
+  }
 }
 
 function displayHealthUnavailable() {
   byId("connectionPill").dataset.state = "error";
-  setText("connectionText", "Backend unavailable");
+  setText("connectionText", "Disconnected");
+  const unavailable = "Backend unreachable. Start the server and refresh.";
   setStatus("backendLight", "backendStatus", "Disconnected", "error");
-  setText("backendDetail", "Start FastAPI, then refresh this page.");
-  setText("metricsStatus", "Unavailable");
-  setStatus("modelLight", "modelStatus", "Unavailable", "error");
-  setText("modelDetail", "Backend health could not be read.");
+  setText("backendDetail", unavailable);
+  setText("metricsStatus", "Disconnected");
+  setStatus("modelLight", "modelStatus", "Disconnected", "error");
+  setText("modelDetail", unavailable);
   setText("modelName", "—");
-  setStatus("cloudLight", "cloudStatus", "Unavailable", "unknown");
-  setText("cloudDetail", "Backend configuration could not be read.");
-  setText("providerStatus", "Unavailable");
-  setStatus("deviceLight", "deviceCount", "Unavailable", "unknown");
-  setText("deviceDetail", "Backend device state could not be read.");
-  setText("deviceStatusNote", "Device state unavailable until the backend responds.");
-  byId("deviceList").replaceChildren();
+  setText("footerModel", "model unavailable");
+  setStatus("cloudLight", "cloudStatus", "Disconnected", "error");
+  setText("cloudDetail", unavailable);
+  setText("providerStatus", "Disconnected");
+  setStatus("deviceLight", "deviceCount", "Disconnected", "error");
+  setText("deviceDetail", unavailable);
+  setText("deviceStatusNote", unavailable);
+  const deviceList = byId("deviceList");
+  deviceList.replaceChildren();
+  const deviceMessage = document.createElement("div");
+  deviceMessage.className = "device-placeholder";
+  deviceMessage.textContent = unavailable;
+  deviceList.append(deviceMessage);
   displayPrivacyHealthUnavailable();
 }
 
@@ -210,7 +225,7 @@ function applyPrivacyHealth(payload) {
 }
 
 function displayPrivacyHealthUnavailable() {
-  const unavailable = "Could not read /health; this status is unavailable.";
+  const unavailable = "Backend unreachable. Start the server and refresh.";
   setText("privacyLastChecked", new Date().toLocaleTimeString());
   setPrivacyStatus("privacyBackendLight", "privacyBackendStatus", "privacyBackendDetail", "Disconnected", "error", unavailable);
   setPrivacyStatus("privacyOllamaLight", "privacyOllamaStatus", "privacyOllamaDetail", "Disconnected", "error", unavailable);
@@ -572,8 +587,15 @@ async function refreshOverview() {
   if (activeController) activeController.abort();
   const controller = new AbortController();
   activeController = controller;
+  const failureVersionAtStart = backendFailureVersion;
+  let timedOut = false;
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, 10000);
   refreshButton.disabled = true;
   refreshButton.classList.add("is-loading");
+  refreshButton.setAttribute("aria-busy", "true");
   byId("connectionPill").dataset.state = "checking";
   setText("connectionText", "Checking backend");
   setStatus("backendLight", "backendStatus", "Checking", "checking");
@@ -583,7 +605,21 @@ async function refreshOverview() {
 
   try {
     const result = await loadOverview(controller.signal);
-    if (controller.signal.aborted) return;
+    if (controller.signal.aborted) {
+      if (timedOut) displayBackendUnavailable();
+      return;
+    }
+    if (backendFailureVersion !== failureVersionAtStart) {
+      displayBackendUnavailable();
+      return;
+    }
+    const unreachable = Object.values(result).some(
+      (response) => response.status === "rejected" && response.reason?.status === 0,
+    );
+    if (unreachable) {
+      displayBackendUnavailable();
+      return;
+    }
     if (result.health.status === "fulfilled") applyHealth(result.health.value);
     else {
       displayHealthUnavailable();
@@ -609,6 +645,7 @@ async function refreshOverview() {
     if (!applyUnavailable(result.activity, renderDailyActivity, "Daily activity is unavailable.")) {
       showEmptyState("dailyActivityChart", "Daily activity is unavailable.");
     }
+    backendDisconnected = false;
     setText("lastChecked", new Date().toLocaleTimeString());
   } catch (error) {
     if (error.name !== "AbortError" && !controller.signal.aborted) {
@@ -616,13 +653,19 @@ async function refreshOverview() {
       showToast(error.message || "Status refresh failed.");
     }
   } finally {
+    window.clearTimeout(timeoutId);
     if (activeController === controller) {
       refreshButton.disabled = false;
+      refreshButton.setAttribute("aria-busy", "false");
       refreshButton.classList.remove("is-loading");
     }
   }
 }
 
+window.addEventListener("backend:unreachable", () => {
+  backendFailureVersion += 1;
+  displayBackendUnavailable();
+});
 refreshButton.addEventListener("click", refreshOverview);
 
 function switchView(name) {
