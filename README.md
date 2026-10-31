@@ -177,6 +177,7 @@ These are small, hand-written snapshots, not estimates of general performance. T
 - Profile classification and answer generation across multiple hardware configurations before making performance claims.
 - If cloud answers are needed, choose a provider and add an explicit sender, configuration checks, and tests for the Privacy Shield and honest failure behavior before enabling it.
 - Add real device integrations only with explicit authentication, authorization, and safety checks; the current simulated whitelist is not a hardware integration.
+- A public hosted demo (a server running Ollama behind HTTPS, with rate limiting and a locked Test Lab) is planned.
 
 ### Raspberry Pi exploration (optional, untested)
 
