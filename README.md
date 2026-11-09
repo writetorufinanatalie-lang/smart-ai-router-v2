@@ -71,13 +71,19 @@ Run these commands in **PowerShell**, from the project folder. The current proje
 
 ## Optional cloud environment setting
 
-`.env.example` contains the optional `CLOUD_API_KEY` setting. To make a local environment file:
+Complex requests that pass the local router checks and Privacy Shield use Anthropic's Claude Messages API (`POST https://api.anthropic.com/v1/messages`). The adapter reads `CLOUD_API_KEY` and `CLOUD_MODEL` from the environment (including `.env`); it does not hard-code a model. `.env.example` uses `claude-haiku-4-5-20251001` as an example model ID.
+
+To make a local environment file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-`.env` is ignored by Git. **There is no cloud provider or provider sender configured in this project.** Setting `CLOUD_API_KEY` alone will not enable cloud processing or produce a cloud answer. Do not add a real key expecting the cloud route to work until a provider sender is deliberately implemented and tested.
+`.env` is ignored by Git. Set your own `CLOUD_API_KEY` and `CLOUD_MODEL` in `.env`; never commit the key. The adapter sends the key only in the `x-api-key` header and uses Anthropic API version `2026-10-21`. Requests have a 30 second timeout. Missing configuration and provider failures return `Cloud route selected, but the request could not be processed` with a safe reason code. The existing dashboard keeps cloud cost as **not available** because this integration does not calculate a price estimate.
+
+For a real request, start the app with Ollama running and submit a request that the local classifier labels `COMPLEX`, such as `Compare the tradeoffs of nuclear, solar, and wind power for a regional grid.` Confirm in the response that the cloud route was selected, `request_sent_to_cloud` is true, and a cloud answer and latency are present. The classifier determines the route, so that example is not guaranteed to be labeled `COMPLEX`.
+
+To check the missing-key failure, stop the app, temporarily remove or blank `CLOUD_API_KEY` in `.env`, restart the app, and submit the same request. The cloud call should not be sent and the failure message should be shown. Restore the key and restart the app afterward.
 
 ## Try the routes
 

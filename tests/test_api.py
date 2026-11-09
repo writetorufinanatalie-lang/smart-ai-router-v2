@@ -274,9 +274,12 @@ def test_post_evaluate_reports_route_accuracy_separately_when_expected_route_is_
     assert body["results"][1]["route_correct"] is False
 
 
-def test_health_reports_backend_ollama_and_cloud_configuration_without_secrets(tmp_path):
-    secret_api_key = "sk-health-check-secret"
-    adapter = CloudAdapter(api_key=secret_api_key)
+def test_health_reports_backend_ollama_and_cloud_configuration_without_secrets(
+    tmp_path, monkeypatch
+):
+    monkeypatch.delenv("CLOUD_API_KEY", raising=False)
+    monkeypatch.delenv("CLOUD_MODEL", raising=False)
+    adapter = CloudAdapter()
     client, _app = make_client(
         tmp_path,
         lambda _text: make_classification(RequestCategory.SIMPLE),
@@ -300,8 +303,29 @@ def test_health_reports_backend_ollama_and_cloud_configuration_without_secrets(t
     assert body["cloud"] == {
         "status": "not_configured",
         "configured": False,
-        "api_key_configured": True,
+        "api_key_configured": False,
         "provider_configured": False,
+    }
+
+
+def test_health_reports_cloud_configured_without_exposing_key(tmp_path, monkeypatch):
+    secret_api_key = "sk-health-check-secret"
+    monkeypatch.setenv("CLOUD_API_KEY", secret_api_key)
+    monkeypatch.setenv("CLOUD_MODEL", "test-model")
+    client, _app = make_client(
+        tmp_path,
+        lambda _text: make_classification(RequestCategory.SIMPLE),
+        cloud_adapter=CloudAdapter(),
+    )
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["cloud"] == {
+        "status": "configured",
+        "configured": True,
+        "api_key_configured": True,
+        "provider_configured": True,
     }
     assert secret_api_key not in response.text
 
